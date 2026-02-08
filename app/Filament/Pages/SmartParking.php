@@ -56,6 +56,38 @@ class SmartParking extends Page implements HasActions
 
     public function refreshSlots(): void
     {
+        // Sync from Firebase first (read IoT sensor data)
+        $firebase = app(FirebaseService::class);
+        $parkingData = $firebase->get('smart-parking');
+
+        if ($parkingData && is_array($parkingData)) {
+            foreach ($parkingData as $slotKey => $slotData) {
+                if (!is_array($slotData))
+                    continue;
+
+                // Parse slot key (e.g., "A-1")
+                $parts = explode('-', $slotKey);
+                if (count($parts) >= 2) {
+                    $area = strtoupper($parts[0]);
+                    $slotNumber = (int) $parts[1];
+
+                    $slot = ParkingSlot::where('area', $area)
+                        ->where('slot_number', $slotNumber)
+                        ->first();
+
+                    if ($slot && !$slot->activeReservation) {
+                        // Update status from IoT sensor
+                        $sensorOccupied = (bool) ($slotData['occupied'] ?? false);
+                        $newStatus = $sensorOccupied ? 'occupied' : 'available';
+
+                        if ($slot->status !== $newStatus) {
+                            $slot->update(['status' => $newStatus]);
+                        }
+                    }
+                }
+            }
+        }
+
         $allSlots = ParkingSlot::with('activeReservation.user')->get();
 
         $this->totalSlots = $allSlots->count();

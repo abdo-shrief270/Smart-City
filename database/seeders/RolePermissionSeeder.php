@@ -212,40 +212,40 @@ class RolePermissionSeeder extends Seeder
 
         // Super Admin User
         $superAdminUser = User::firstOrCreate(
-            ['email' => 'admin@smartcity.test'],
+            ['email' => 'kareem@smartcity.com'],
             [
-                'name' => 'Super Admin',
-                'password' => Hash::make('SuperAdmin@123'),
+                'name' => 'Kareem Salah',
+                'password' => Hash::make('12345678'),
             ]
         );
         $superAdminUser->assignRole('super_admin');
 
         // Admin User
         $adminUser = User::firstOrCreate(
-            ['email' => 'admin.user@smartcity.test'],
+            ['email' => 'atef@smartcity.com'],
             [
-                'name' => 'Admin User',
-                'password' => Hash::make('Admin@123'),
+                'name' => 'mahmoud Eltoukhy',
+                'password' => Hash::make('12345678'),
             ]
         );
         $adminUser->assignRole('admin');
 
         // Moderator User
         $moderatorUser = User::firstOrCreate(
-            ['email' => 'moderator@smartcity.test'],
+            ['email' => 'hossam@smartcity.com'],
             [
-                'name' => 'Moderator User',
-                'password' => Hash::make('Moderator@123'),
+                'name' => 'Hossam Ghoniem',
+                'password' => Hash::make('12345678'),
             ]
         );
         $moderatorUser->assignRole('moderator');
 
         // Regular User
         $regularUser = User::firstOrCreate(
-            ['email' => 'user@smartcity.test'],
+            ['email' => 'user@smartcity.com'],
             [
                 'name' => 'Regular User',
-                'password' => Hash::make('User@123'),
+                'password' => Hash::make('12345678'),
             ]
         );
         $regularUser->assignRole('user');
@@ -254,9 +254,9 @@ class RolePermissionSeeder extends Seeder
         $this->command->info('');
         $this->command->info('Test Users Created:');
         $this->command->info('-------------------');
-        $this->command->info('Super Admin: admin@smartcity.test / SuperAdmin@123');
-        $this->command->info('Admin: admin.user@smartcity.test / Admin@123');
-        $this->command->info('Moderator: moderator@smartcity.test / Moderator@123');
-        $this->command->info('User: user@smartcity.test / User@123');
+        $this->command->info('Super Admin: kareem@smartcity.com / 12345678');
+        $this->command->info('Admin: atef@smartcity.com / 12345678');
+        $this->command->info('Moderator: hossam@smartcity.com / 12345678');
+        $this->command->info('User: user@smartcity.com / 12345678');
     }
 }

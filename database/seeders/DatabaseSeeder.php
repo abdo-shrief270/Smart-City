@@ -17,5 +17,6 @@ class DatabaseSeeder extends Seeder
     {
         // Seed roles, permissions, and test users
         $this->call(RolePermissionSeeder::class);
+        $this->call(ParkingSeeder::class);
     }
 }

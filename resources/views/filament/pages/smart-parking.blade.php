@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div wire:poll.10s="refreshSlots" class="smart-parking-container">
+    <div wire:poll.1s="refreshSlots" class="smart-parking-container">
 
         {{-- Stats Overview --}}
         <div class="stats-grid">
