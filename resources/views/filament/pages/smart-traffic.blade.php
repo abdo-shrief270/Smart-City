@@ -417,40 +417,6 @@
 }
 .center-timer.urgent { color: #ef4444; text-shadow: 0 0 20px rgba(239,68,68,0.6); }
 
-/* ---- TRAFFIC LIGHTS (smaller, vertical, mounted on left side of each road) ---- */
-.tl-light {
-    position: absolute;
-    background: #111827;
-    border: 1.5px solid #374151;
-    border-radius: 5px;
-    padding: 3px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.55);
-    z-index: 10;
-}
-
-/* North arm, west side — for northbound traffic (left-of-road on the far side) */
-.tl-light.north {
-    top: 126px;
-    right: 290px;
-}
-/* South arm, east side — for southbound traffic */
-.tl-light.south {
-    bottom: 126px;
-    left: 290px;
-}
-/* East arm, north side — for eastbound traffic */
-.tl-light.east {
-    bottom: 290px;
-    right: 158px;
-}
-/* West arm, south side — for westbound traffic */
-.tl-light.west {
-    top: 290px;
-    left: 158px;
-}
 
 .tl-bulb {
     width: 13px;
@@ -526,6 +492,56 @@
     position: absolute;
     bottom: -12px; left: 0; right: 0; height: 10px;
     background-image: repeating-linear-gradient(to right, #e5e7eb 0px, #e5e7eb 12px, transparent 12px, transparent 24px);
+}
+
+
+/* ---- TRAFFIC LIGHTS (right-side of each approaching road) ---- */
+.tl-light {
+    position: absolute;
+    background: #111827;
+    border: 1.5px solid #374151;
+    border-radius: 5px;
+    padding: 3px;
+    display: flex;
+    gap: 3px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.55);
+    z-index: 10;
+}
+
+/* North & South: vertical stack (default) */
+.tl-light.north,
+.tl-light.south {
+    flex-direction: column;
+}
+
+/* East & West: horizontal row */
+.tl-light.east,
+.tl-light.west {
+    flex-direction: row;
+}
+
+/* Northbound traffic (going up) — light on driver's right = EAST side, near south edge of intersection */
+.tl-light.north {
+    bottom: 120px;
+    left: 340px;
+}
+
+/* Southbound traffic (going down) — light on driver's right = WEST side, near north edge */
+.tl-light.south {
+    top: 120px;
+    right: 340px;
+}
+
+/* Eastbound traffic (going right) — light on driver's right = SOUTH side, near west edge */
+.tl-light.east {
+    top: 340px;
+    left: 135px;
+}
+
+/* Westbound traffic (going left) — light on driver's right = NORTH side, near east edge */
+.tl-light.west {
+    bottom: 340px;
+    right: 135px;
 }
 </style>
 </x-filament-panels::page>
