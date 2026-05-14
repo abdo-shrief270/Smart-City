@@ -66,8 +66,7 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_END,
                 fn (): View => view('filament.navbar.floating-logo'),
             )
-            ->brandLogo(fn () => asset('logo.jpeg'))
-            ->brandLogoHeight('2.5rem')
+            ->brandName(config('app.name', 'Smart City'))
             ->favicon(asset('logo.jpeg'))
             ->defaultAvatarProvider(\App\Filament\AvatarProviders\LogoAvatarProvider::class)
             ->userMenuItems([
