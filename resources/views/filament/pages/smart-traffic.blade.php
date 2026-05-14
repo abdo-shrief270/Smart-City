@@ -107,12 +107,13 @@
 
             {{-- ---- CENTER CIRCLE ---- --}}
             <div class="center-box">
-                <div class="crosswalk crosswalk-west"></div>
-                <div class="crosswalk crosswalk-east"></div>
-                <div class="center-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:30px;height:30px;opacity:0.4;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
-                    </svg>
+                <div class="dash-ring"></div>
+                <div class="center-island">
+                    <div class="center-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px;height:24px;opacity:0.45;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+                        </svg>
+                    </div>
                 </div>
             </div>
 
@@ -323,31 +324,56 @@
 /* ---- DASHED CENTER LINES ---- */
 .dash-v {
     position: absolute;
-    left: 279px; top: 0; bottom: 0;
-    width: 4px;
-    background-image: repeating-linear-gradient(to bottom, #fef08a 0px, #fef08a 20px, transparent 20px, transparent 40px);
+    left: 279.5px; top: 0; bottom: 0;
+    width: 2px;
+    background-image: repeating-linear-gradient(to bottom, #fef08a 0px, #fef08a 12px, transparent 12px, transparent 24px);
     z-index: 3;
 }
 .dash-h {
     position: absolute;
-    top: 279px; left: 0; right: 0;
-    height: 4px;
-    background-image: repeating-linear-gradient(to right, #fef08a 0px, #fef08a 20px, transparent 20px, transparent 40px);
+    top: 279.5px; left: 0; right: 0;
+    height: 2px;
+    background-image: repeating-linear-gradient(to right, #fef08a 0px, #fef08a 12px, transparent 12px, transparent 24px);
     z-index: 3;
 }
 
 /* ---- CENTER CIRCLE (roundabout island) ---- */
+/* Layout container — kept at full intersection size so crosswalks stay at road edges */
 .center-box {
     position: absolute;
     left: 190px; top: 190px;
     width: 180px; height: 180px;
-    background: #1f2937;
+    background: transparent;
     z-index: 5;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Actual visual island — smaller centered circle */
+.center-island {
+    width: 120px;
+    height: 120px;
+    background: #1f2937;
     border: 3px solid #374151;
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 4px rgba(0,0,0,0.15);
+}
+
+/* Dashed yellow ring around the island */
+.dash-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 136px;
+    height: 136px;
+    transform: translate(-50%, -50%);
+    border: 2px dashed #fef08a;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 4;
 }
 
 .tl-bulb {
@@ -412,33 +438,6 @@
 .dark .st-light-btn.yellow.active { box-shadow: 0 0 0 2px #111, 0 0 8px 2px rgba(234,179,8,0.8); }
 .dark .st-light-btn.green.active  { box-shadow: 0 0 0 2px #111, 0 0 8px 2px rgba(34,197,94,0.8); }
 
-/* Crosswalks — north & south (horizontal stripes) */
-.center-box::before {
-    content: '';
-    position: absolute;
-    top: -12px; left: 0; right: 0; height: 10px;
-    background-image: repeating-linear-gradient(to right, #e5e7eb 0px, #e5e7eb 12px, transparent 12px, transparent 24px);
-}
-.center-box::after {
-    content: '';
-    position: absolute;
-    bottom: -12px; left: 0; right: 0; height: 10px;
-    background-image: repeating-linear-gradient(to right, #e5e7eb 0px, #e5e7eb 12px, transparent 12px, transparent 24px);
-}
-
-/* Crosswalks — east & west (vertical stripes) */
-.crosswalk-west {
-    position: absolute;
-    left: -12px; top: 0; bottom: 0; width: 10px;
-    background-image: repeating-linear-gradient(to bottom, #e5e7eb 0px, #e5e7eb 12px, transparent 12px, transparent 24px);
-}
-.crosswalk-east {
-    position: absolute;
-    right: -12px; top: 0; bottom: 0; width: 10px;
-    background-image: repeating-linear-gradient(to bottom, #e5e7eb 0px, #e5e7eb 12px, transparent 12px, transparent 24px);
-}
-
-
 /* ---- TRAFFIC LIGHTS (right-side of each approaching road) ---- */
 .tl-light {
     position: absolute;
@@ -467,25 +466,28 @@
 /* Northbound traffic (going up) — light on driver's right = EAST side, near south edge of intersection */
 .tl-light.north {
     bottom: 120px;
-    left: 360px;
+    left: 340px;
 }
 
 /* Southbound traffic (going down) — light on driver's right = WEST side, near north edge */
 .tl-light.south {
     top: 120px;
-    right: 360px;
+    right: 340px;
+    transform: rotate(180deg);
 }
 
 /* Eastbound traffic (going right) — light on driver's right = SOUTH side, near west edge */
 .tl-light.east {
     top: 340px;
-    left: 160px;
+    left: 120px;
+
+    transform: rotate(180deg);
 }
 
 /* Westbound traffic (going left) — light on driver's right = NORTH side, near east edge */
 .tl-light.west {
     bottom: 340px;
-    right: 160px;
+    right: 120px;
 }
 </style>
 </x-filament-panels::page>

@@ -24,26 +24,16 @@
         a blueprint for scalable municipal IoT deployments.';
 
     $team = [
-        [
-            'name' => 'Team Member 1',
-            'role' => 'Team Lead · Backend',
-            'image' => null, // e.g. asset('team/member1.jpg')
-        ],
-        [
-            'name' => 'Team Member 2',
-            'role' => 'IoT / Firmware',
-            'image' => null,
-        ],
-        [
-            'name' => 'Team Member 3',
-            'role' => 'Frontend · UI/UX',
-            'image' => null,
-        ],
-        [
-            'name' => 'Team Member 4',
-            'role' => 'Data & Firebase',
-            'image' => null,
-        ],
+        ['name' => 'Mahmoud Eltoukhy',  'role' => 'Team Leader', 'image' => asset('Team-Images/elteeez.jpeg')],
+        ['name' => 'Kareem Salah',   'role' => 'Web Developer', 'image' => asset('Team-Images/kareem.jpeg')],
+        ['name' => 'Basmala Hamdy',  'role' => 'Smart Lighting', 'image' => asset('Team-Images/basmala.jpeg')],
+        ['name' => 'Hossam Ghanem',   'role' => 'Smart Traffic', 'image' => asset('Team-Images/hossam.jpeg')],
+        ['name' => 'Lamluom Rabie',   'role' => 'Python & Ai', 'image' => asset('Team-Images/lamlom.jpeg')],
+        ['name' => 'Ali Nashwan',  'role' => 'Smart Farm', 'image' => asset('Team-Images/nashwan.jpeg')],
+        ['name' => 'Omar Said',     'role' => 'Graduation Book', 'image' => asset('Team-Images/omar.jpeg')],
+        ['name' => 'Tassnem Ashraf',   'role' => 'Graduation Presentation', 'image' => asset('Team-Images/tasnim.jpeg')],
+        ['name' => 'Walaa Mohamed',    'role' => 'Smart Parking', 'image' => asset('Team-Images/walaa.jpeg')],
+        ['name' => 'Ali Khaled',    'role' => 'Smart Farm', 'image' => asset('Team-Images/weeka.PNG')],
     ];
 
     $supervisors = [
@@ -53,6 +43,32 @@
             'image' => null,
         ],
     ];
+
+    /*
+    | Drop project screenshots / photos in:  public/project-images/
+    | Drop demo videos (mp4/webm) or YouTube URLs in: public/project-videos/
+    | They'll auto-appear in the gallery & video sections below.
+    */
+    $imageExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'JPG', 'JPEG', 'PNG'];
+    $videoExt = ['mp4', 'webm', 'mov', 'ogg'];
+
+    $gallery = collect($imageExt)
+        ->flatMap(fn ($ext) => glob(public_path("project-images/*.{$ext}")) ?: [])
+        ->unique()
+        ->map(fn ($path) => asset('project-images/' . basename($path)))
+        ->values()
+        ->all();
+
+    $videos = collect($videoExt)
+        ->flatMap(fn ($ext) => glob(public_path("project-videos/*.{$ext}")) ?: [])
+        ->unique()
+        ->map(fn ($path) => [
+            'src' => asset('project-videos/' . basename($path)),
+            'type' => 'video/' . strtolower(pathinfo($path, PATHINFO_EXTENSION)),
+            'name' => pathinfo($path, PATHINFO_FILENAME),
+        ])
+        ->values()
+        ->all();
 
     $avatarFor = function (array $person): string {
         if (!empty($person['image'])) {
@@ -245,6 +261,161 @@
             background: linear-gradient(135deg, #f59e0b, #ef4444);
         }
 
+        /* Media — Gallery & Videos */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.5rem;
+        }
+        .video-grid {
+            grid-template-columns: repeat(auto-fill, minmax(320px, 480px));
+            justify-content: center;
+        }
+        .media-tile {
+            position: relative;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--border-light);
+            border-radius: 18px;
+            overflow: hidden;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        body.dark-mode .media-tile { border-color: var(--border-dark); }
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-mode) .media-tile { border-color: var(--border-dark); }
+        }
+
+        /* Image tiles — keep aspect, never stretch the source */
+        .media-tile.image {
+            aspect-ratio: 4 / 3;
+            max-height: 320px;
+            cursor: zoom-in;
+        }
+        .media-tile.image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;       /* no stretching, no cropping */
+            object-position: center;
+            display: block;
+            transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                        filter 0.4s ease;
+            filter: saturate(0.92);
+        }
+
+        /* Soft gradient sheen that sweeps across on hover */
+        .media-tile.image::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+            transform: translateX(-110%);
+            transition: transform 0.65s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Color ring that fades in on hover */
+        .media-tile.image::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            box-shadow: inset 0 0 0 0 rgba(102,126,234,0);
+            transition: box-shadow 0.4s ease;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .media-tile.image:hover {
+            transform: translateY(-6px) scale(1.015);
+            box-shadow: 0 22px 45px -12px rgba(102,126,234,0.45),
+                        0 8px 16px -8px rgba(118,75,162,0.35);
+            border-color: rgba(102,126,234,0.45);
+        }
+        .media-tile.image:hover img {
+            transform: scale(1.08);
+            filter: saturate(1.15) brightness(1.05);
+        }
+        .media-tile.image:hover::before { transform: translateX(110%); }
+        .media-tile.image:hover::after  { box-shadow: inset 0 0 0 3px rgba(102,126,234,0.6); }
+
+        /* Video tiles — bounded box, never stretch the source */
+        .media-tile.video {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            max-width: 480px;
+            max-height: 270px;          /* 480 × 9/16 */
+            min-height: 180px;
+            margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .media-tile.video video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;       /* preserve native aspect */
+            background: #000;
+            display: block;
+        }
+        .media-tile.video:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 30px -10px rgba(102,126,234,0.35);
+            border-color: rgba(102,126,234,0.4);
+        }
+
+        /* Mobile: free the cap so videos stay readable on narrow screens */
+        @media (max-width: 540px) {
+            .media-tile.video {
+                max-width: 100%;
+                max-height: none;
+            }
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .media-empty {
+            margin-top: 1rem;
+            padding: 2rem;
+            text-align: center;
+            color: var(--muted-light);
+            background: var(--card-light);
+            border: 1px dashed var(--border-light);
+            border-radius: 16px;
+            font-size: 0.95rem;
+        }
+        body.dark-mode .media-empty { background: var(--card-dark); border-color: var(--border-dark); color: var(--muted-dark); }
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-mode) .media-empty { background: var(--card-dark); border-color: var(--border-dark); color: var(--muted-dark); }
+        }
+        .media-empty code {
+            font-family: monospace;
+            background: rgba(102,126,234,0.1);
+            color: #667eea;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+
+        /* Lightbox for full-screen image preview */
+        .lightbox {
+            position: fixed; inset: 0;
+            background: rgba(2, 6, 23, 0.92);
+            z-index: 2000;
+            display: none;
+            align-items: center; justify-content: center;
+            padding: 2rem;
+            cursor: zoom-out;
+            backdrop-filter: blur(6px);
+        }
+        .lightbox.is-open { display: flex; animation: lbFade 0.2s ease-out; }
+        .lightbox img {
+            max-width: 95vw;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+        }
+        @keyframes lbFade { from { opacity: 0; } to { opacity: 1; } }
+
         /* Footer */
         .footer {
             background: linear-gradient(135deg, #1e293b, #0f172a);
@@ -301,6 +472,45 @@
     </section>
 
     <section class="section">
+        <div class="section-kicker">Project Gallery</div>
+        <h2 class="section-title">Screenshots & photos</h2>
+        @if(count($gallery) > 0)
+            <div class="media-grid">
+                @foreach($gallery as $img)
+                    <div class="media-tile image" data-lightbox="{{ $img }}">
+                        <img src="{{ $img }}" alt="Project screenshot" loading="lazy">
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="media-empty">
+                Drop images into <code>public/project-images/</code> (jpg / jpeg / png / webp) and they'll appear here automatically.
+            </div>
+        @endif
+    </section>
+
+    <section class="section">
+        <div class="section-kicker">Demo Videos</div>
+        <h2 class="section-title">See it in action</h2>
+        @if(count($videos) > 0)
+            <div class="media-grid video-grid">
+                @foreach($videos as $vid)
+                    <div class="media-tile video">
+                        <video controls preload="metadata" playsinline>
+                            <source src="{{ $vid['src'] }}" type="{{ $vid['type'] }}">
+                            Your browser doesn't support embedded video.
+                        </video>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="media-empty">
+                Drop videos into <code>public/project-videos/</code> (mp4 / webm / mov) and they'll appear here automatically.
+            </div>
+        @endif
+    </section>
+
+    <section class="section">
         <div class="section-kicker">The Team</div>
         <h2 class="section-title">Team members</h2>
         <div class="people-grid">
@@ -332,9 +542,38 @@
         </div>
     </section>
 
+    <div class="lightbox" id="lightbox" aria-hidden="true">
+        <img src="" alt="Preview" id="lightboxImg">
+    </div>
+
     <footer class="footer">
         <p>&copy; {{ date('Y') }} {{ config('app.name', 'Smart City') }} · <a href="{{ url('/') }}">Back to home</a></p>
     </footer>
+
+    <script>
+        // Lightbox for gallery images
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        document.querySelectorAll('[data-lightbox]').forEach((tile) => {
+            tile.addEventListener('click', () => {
+                lightboxImg.src = tile.getAttribute('data-lightbox');
+                lightbox.classList.add('is-open');
+                lightbox.setAttribute('aria-hidden', 'false');
+            });
+        });
+        lightbox.addEventListener('click', () => {
+            lightbox.classList.remove('is-open');
+            lightbox.setAttribute('aria-hidden', 'true');
+            lightboxImg.src = '';
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lightbox.classList.contains('is-open')) {
+                lightbox.classList.remove('is-open');
+                lightbox.setAttribute('aria-hidden', 'true');
+                lightboxImg.src = '';
+            }
+        });
+    </script>
 
     <script>
         const themeToggle = document.getElementById('themeToggle');
