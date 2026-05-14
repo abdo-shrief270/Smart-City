@@ -35,19 +35,23 @@ class SmartTraffic extends Page
         return 5;
     }
 
-    public string $mode = 'manual'; // 'manual' or 'auto'
-    
-    // unified timer for Auto mode
-    public int $greenTimer = 30; // Green Timer for all directions
-    
-    // 'ns_green' means North/South is Green, East/West is Red.
-    // 'ew_green' means East/West is Green, North/South is Red.
-    public string $direction = 'ns_green';
+    public const DIRECTIONS = ['north', 'south', 'east', 'west'];
+    public const COLORS = ['red', 'yellow', 'green'];
 
-    // Frontend state
+    public string $mode = 'manual'; // 'manual' or 'auto'
+    public int $greenTimer = 30;
+
+    /** Per-light state: 'north'|'south'|'east'|'west' => 'red'|'yellow'|'green' */
+    public array $lights = [
+        'north' => 'red',
+        'south' => 'red',
+        'east'  => 'red',
+        'west'  => 'red',
+    ];
+
+    // Auto-mode UI helpers
     public int $timeLeft = 0;
     public int $nextSwitchTime = 0;
-    public bool $isYellow = false;
 
     public function mount(): void
     {
@@ -65,78 +69,76 @@ class SmartTraffic extends Page
 
         $this->mode = $data['mode'] ?? 'manual';
         $this->greenTimer = (int) ($data['greenTimer'] ?? 30);
-        $this->direction = $data['direction'] ?? 'ns_green';
-        
         $now = time();
+        $isYellow = false;
 
         if ($this->mode === 'auto') {
+            // Cycle locally so the page works without hardware; the per-light
+            // values are mirrored to Firebase for the ESP32 to consume.
             $nextSwitch = (int) ($data['nextSwitchTime'] ?? 0);
-            
-            // Initialize or fix stuck timer
+            $direction = $data['direction'] ?? 'ns_green';
+
             if ($nextSwitch === 0 || $nextSwitch < $now - 10) {
                 $nextSwitch = $now + $this->greenTimer;
                 $firebase->set('smart-traffic/nextSwitchTime', $nextSwitch);
             }
-            
+
             if ($now >= $nextSwitch) {
-                // Time to switch
-                $this->direction = $this->direction === 'ns_green' ? 'ew_green' : 'ns_green';
+                $direction = $direction === 'ns_green' ? 'ew_green' : 'ns_green';
                 $nextSwitch = $now + $this->greenTimer;
-                
-                $firebase->set('smart-traffic/direction', $this->direction);
+                $firebase->set('smart-traffic/direction', $direction);
                 $firebase->set('smart-traffic/nextSwitchTime', $nextSwitch);
+                $this->writeLightsForDirection($firebase, $direction);
             }
-            
-            $this->timeLeft = max(0, $nextSwitch - $now);
+
             $this->nextSwitchTime = $nextSwitch;
-            $this->isYellow = ($this->timeLeft <= 3 && $this->timeLeft > 0);
+            $this->timeLeft = max(0, $nextSwitch - $now);
+            $isYellow = $this->timeLeft <= 3 && $this->timeLeft > 0;
         } else {
-            // Manual mode
-            $pendingDirection = $data['pendingDirection'] ?? null;
-            $transitionUntil = (int) ($data['transitionUntil'] ?? 0);
-            
-            if ($pendingDirection && $now >= $transitionUntil) {
-                // Finish manual transition
-                $this->direction = $pendingDirection;
-                $firebase->set('smart-traffic/direction', $this->direction);
-                $firebase->set('smart-traffic/pendingDirection', null);
-                $firebase->set('smart-traffic/transitionUntil', 0);
-                
-                $this->isYellow = false;
-            } elseif ($pendingDirection && $now < $transitionUntil) {
-                // Currently in yellow phase
-                $this->isYellow = true;
-            } else {
-                // Normal manual state
-                $this->isYellow = false;
-            }
-            
             $this->timeLeft = 0;
+            $this->nextSwitchTime = 0;
+        }
+
+        // Source of truth for what the UI shows: per-light keys in Firebase.
+        $lightsData = $data['lights'] ?? [];
+        foreach (self::DIRECTIONS as $dir) {
+            $state = $lightsData[$dir] ?? 'red';
+            // Overlay yellow flash during the auto-mode transition window.
+            if ($isYellow && $state === 'green') {
+                $state = 'yellow';
+            }
+            $this->lights[$dir] = $state;
+        }
+    }
+
+    private function writeLightsForDirection(FirebaseService $firebase, string $direction): void
+    {
+        $pairs = $direction === 'ns_green'
+            ? ['north' => 'green', 'south' => 'green', 'east' => 'red', 'west' => 'red']
+            : ['north' => 'red',   'south' => 'red',   'east' => 'green', 'west' => 'green'];
+
+        foreach ($pairs as $dir => $color) {
+            $firebase->set("smart-traffic/lights/{$dir}", $color);
         }
     }
 
     public function toggleMode(): void
     {
-        $this->pollData(); // sync first
+        $this->pollData();
         $this->mode = $this->mode === 'manual' ? 'auto' : 'manual';
-        
+
         $firebase = app(FirebaseService::class);
         $firebase->set('smart-traffic/mode', $this->mode);
 
         if ($this->mode === 'auto') {
             $firebase->set('smart-traffic/nextSwitchTime', time() + $this->greenTimer);
-            $firebase->set('smart-traffic/pendingDirection', null);
-            $firebase->set('smart-traffic/transitionUntil', 0);
-        } else {
-            $firebase->set('smart-traffic/pendingDirection', null);
-            $firebase->set('smart-traffic/transitionUntil', 0);
         }
 
         Notification::make()
             ->title('Mode switched to ' . ucfirst($this->mode))
             ->success()
             ->send();
-            
+
         $this->pollData();
     }
 
@@ -149,7 +151,7 @@ class SmartTraffic extends Page
 
         $firebase = app(FirebaseService::class);
         $firebase->set('smart-traffic/greenTimer', (int) $this->greenTimer);
-        
+
         if ($this->mode === 'auto') {
             $firebase->set('smart-traffic/nextSwitchTime', time() + $this->greenTimer);
         }
@@ -158,21 +160,19 @@ class SmartTraffic extends Page
         $this->pollData();
     }
 
-    public function setDirection(string $direction): void
+    public function setLight(string $dir, string $color): void
     {
         if ($this->mode === 'auto') {
-            Notification::make()->title('Cannot change lights manually in Auto mode')->warning()->send();
+            Notification::make()->title('Cannot control lights manually in Auto mode')->warning()->send();
             return;
         }
 
-        if (in_array($direction, ['ns_green', 'ew_green']) && $this->direction !== $direction) {
-            $firebase = app(FirebaseService::class);
-            // Trigger yellow phase for 2 seconds
-            $firebase->set('smart-traffic/pendingDirection', $direction);
-            $firebase->set('smart-traffic/transitionUntil', time() + 2);
-            
-            Notification::make()->title("Transitioning lights...")->success()->send();
-            $this->pollData();
+        if (!in_array($dir, self::DIRECTIONS, true) || !in_array($color, self::COLORS, true)) {
+            return;
         }
+
+        $firebase = app(FirebaseService::class);
+        $firebase->set("smart-traffic/lights/{$dir}", $color);
+        $this->lights[$dir] = $color;
     }
 }

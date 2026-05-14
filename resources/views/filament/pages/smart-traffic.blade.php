@@ -58,27 +58,24 @@
                 </div>
             </div>
         @else
-            <div class="st-dock-inline">
-                <button wire:click="setDirection('ns_green')"
-                        class="st-dir-btn {{ $direction === 'ns_green' ? 'active' : '' }}"
-                        {{ $isYellow ? 'disabled' : '' }}>
-                    ↕ N/S
-                </button>
-                <button wire:click="setDirection('ew_green')"
-                        class="st-dir-btn {{ $direction === 'ew_green' ? 'active' : '' }}"
-                        {{ $isYellow ? 'disabled' : '' }}>
-                    ↔ E/W
-                </button>
+            <div class="st-dock-inline st-lights-grid">
+                @foreach(['north' => 'N', 'south' => 'S', 'east' => 'E', 'west' => 'W'] as $dir => $label)
+                    <div class="st-light-ctrl">
+                        <span class="st-light-ctrl-label">{{ $label }}</span>
+                        @foreach(['red', 'yellow', 'green'] as $color)
+                            <button type="button"
+                                    wire:click="setLight('{{ $dir }}', '{{ $color }}')"
+                                    class="st-light-btn {{ $color }} {{ ($lights[$dir] ?? 'red') === $color ? 'active' : '' }}"
+                                    title="Set {{ ucfirst($dir) }} to {{ ucfirst($color) }}"
+                                    aria-label="Set {{ $dir }} to {{ $color }}"></button>
+                        @endforeach
+                    </div>
+                @endforeach
             </div>
         @endif
     </div>
 
     {{-- ===================== INTERSECTION ===================== --}}
-    @php
-        $nsState = $direction === 'ns_green' ? ($isYellow ? 'yellow' : 'green') : 'red';
-        $ewState = $direction === 'ew_green' ? ($isYellow ? 'yellow' : 'green') : 'red';
-    @endphp
-
     <div class="st-intersection-wrap">
         <div class="st-intersection">
 
@@ -86,41 +83,47 @@
 
             {{-- Top-Left: Smart Parking 1 --}}
             <div class="grass tl">
-                <div class="grass-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                <div class="grass-icon parking">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                        <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" stroke-linejoin="round" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.25 17.25V6.75h4.25a2.75 2.75 0 0 1 0 5.5H9.25" />
                     </svg>
                     <span>Smart Parking 1</span>
                 </div>
             </div>
 
-            {{-- Top-Right: Smart Parking 2 --}}
+            {{-- Top-Right: Smart Farm --}}
             <div class="grass tr">
-                <div class="grass-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                <div class="grass-icon farm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.5V11" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0-3.5 2.5-6 6-6 0 3.5-2.5 6-6 6Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14c0-3-2.2-5.2-5.2-5.2C6.8 11.8 9 14 12 14Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 20.5h14" />
                     </svg>
-                    <span>Smart Parking 2</span>
+                    <span>Smart Farm</span>
                 </div>
             </div>
 
             {{-- Bottom-Left: Smart Tank --}}
             <div class="grass bl">
                 <div class="grass-icon tank">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 1-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.5c0 0 7 7.8 7 12.5a7 7 0 0 1-14 0c0-4.7 7-12.5 7-12.5Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" opacity="0.7" d="M8 15a4 4 0 0 0 4 4" />
                     </svg>
                     <span>Smart Tank</span>
                 </div>
             </div>
 
-            {{-- Bottom-Right: Smart Farm --}}
+            {{-- Bottom-Right: Smart Parking 2 --}}
             <div class="grass br">
-                <div class="grass-icon farm">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                <div class="grass-icon parking">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                        <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" stroke-linejoin="round" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.25 17.25V6.75h4.25a2.75 2.75 0 0 1 0 5.5H9.25" />
                     </svg>
-                    <span>Smart Farm</span>
+                    <span>Smart Parking 2</span>
                 </div>
             </div>
 
@@ -145,35 +148,15 @@
                 @endif
             </div>
 
-            {{-- ---- TRAFFIC LIGHTS ---- --}}
-
-            {{-- North --}}
-            <div class="tl-light north">
-                <div class="tl-bulb red {{ $nsState === 'red' ? 'on' : '' }}"></div>
-                <div class="tl-bulb yellow {{ $nsState === 'yellow' ? 'on' : '' }}"></div>
-                <div class="tl-bulb green {{ $nsState === 'green' ? 'on' : '' }}"></div>
-            </div>
-
-            {{-- South --}}
-            <div class="tl-light south">
-                <div class="tl-bulb red {{ $nsState === 'red' ? 'on' : '' }}"></div>
-                <div class="tl-bulb yellow {{ $nsState === 'yellow' ? 'on' : '' }}"></div>
-                <div class="tl-bulb green {{ $nsState === 'green' ? 'on' : '' }}"></div>
-            </div>
-
-            {{-- East --}}
-            <div class="tl-light east">
-                <div class="tl-bulb red {{ $ewState === 'red' ? 'on' : '' }}"></div>
-                <div class="tl-bulb yellow {{ $ewState === 'yellow' ? 'on' : '' }}"></div>
-                <div class="tl-bulb green {{ $ewState === 'green' ? 'on' : '' }}"></div>
-            </div>
-
-            {{-- West --}}
-            <div class="tl-light west">
-                <div class="tl-bulb red {{ $ewState === 'red' ? 'on' : '' }}"></div>
-                <div class="tl-bulb yellow {{ $ewState === 'yellow' ? 'on' : '' }}"></div>
-                <div class="tl-bulb green {{ $ewState === 'green' ? 'on' : '' }}"></div>
-            </div>
+            {{-- ---- TRAFFIC LIGHTS (one per direction, right-of-road) ---- --}}
+            @foreach(['north', 'south', 'east', 'west'] as $dir)
+                @php $state = $lights[$dir] ?? 'red'; @endphp
+                <div class="tl-light {{ $dir }}">
+                    <div class="tl-bulb red {{ $state === 'red' ? 'on' : '' }}"></div>
+                    <div class="tl-bulb yellow {{ $state === 'yellow' ? 'on' : '' }}"></div>
+                    <div class="tl-bulb green {{ $state === 'green' ? 'on' : '' }}"></div>
+                </div>
+            @endforeach
 
         </div>{{-- /st-intersection --}}
     </div>{{-- /st-intersection-wrap --}}
@@ -369,8 +352,9 @@
     border-radius: 999px;
     white-space: nowrap;
 }
+.grass-icon.parking svg { color: #e5e7eb; }
 .grass-icon.tank svg { color: #60a5fa; }
-.grass-icon.farm svg { color: #fde68a; }
+.grass-icon.farm svg { color: #86efac; }
 
 /* ---- ROADS ---- */
 .road-v {
@@ -433,60 +417,102 @@
 }
 .center-timer.urgent { color: #ef4444; text-shadow: 0 0 20px rgba(239,68,68,0.6); }
 
-/* ---- TRAFFIC LIGHTS ---- */
+/* ---- TRAFFIC LIGHTS (smaller, vertical, mounted on left side of each road) ---- */
 .tl-light {
     position: absolute;
     background: #111827;
-    border: 2px solid #374151;
-    border-radius: 10px;
-    padding: 7px;
+    border: 1.5px solid #374151;
+    border-radius: 5px;
+    padding: 3px;
     display: flex;
-    gap: 7px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    flex-direction: column;
+    gap: 3px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.55);
     z-index: 10;
 }
 
-/* North: horizontal light sitting on vertical road, upper arm */
+/* North arm, west side — for northbound traffic (left-of-road on the far side) */
 .tl-light.north {
-    flex-direction: row;
-    left: 50%; transform: translateX(-50%);
-    top: 100px;
+    top: 126px;
+    right: 290px;
 }
-/* South: horizontal light sitting on vertical road, lower arm */
+/* South arm, east side — for southbound traffic */
 .tl-light.south {
-    flex-direction: row;
-    left: 50%; transform: translateX(-50%);
-    bottom: 100px;
+    bottom: 126px;
+    left: 290px;
 }
-/* East: vertical light on horizontal road, right arm */
+/* East arm, north side — for eastbound traffic */
 .tl-light.east {
-    flex-direction: column;
-    top: 50%; transform: translateY(-50%);
-    right: 100px;
+    bottom: 290px;
+    right: 158px;
 }
-/* West: vertical light on horizontal road, left arm */
+/* West arm, south side — for westbound traffic */
 .tl-light.west {
-    flex-direction: column;
-    top: 50%; transform: translateY(-50%);
-    left: 100px;
+    top: 290px;
+    left: 158px;
 }
 
 .tl-bulb {
-    width: 26px;
-    height: 26px;
+    width: 13px;
+    height: 13px;
     border-radius: 50%;
-    border: 2px solid #000;
+    border: 1.5px solid #000;
     opacity: 0.2;
-    transition: all 0.3s ease;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+    transition: all 0.25s ease;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.6);
 }
 .tl-bulb.red   { background: #991b1b; }
 .tl-bulb.yellow{ background: #78350f; }
 .tl-bulb.green { background: #14532d; }
 
-.tl-bulb.red.on    { background: #ef4444; opacity: 1; box-shadow: 0 0 14px 4px rgba(239,68,68,0.7); }
-.tl-bulb.yellow.on { background: #eab308; opacity: 1; box-shadow: 0 0 14px 4px rgba(234,179,8,0.7); }
-.tl-bulb.green.on  { background: #22c55e; opacity: 1; box-shadow: 0 0 14px 4px rgba(34,197,94,0.7); }
+.tl-bulb.red.on    { background: #ef4444; opacity: 1; box-shadow: 0 0 8px 2px rgba(239,68,68,0.7); }
+.tl-bulb.yellow.on { background: #eab308; opacity: 1; box-shadow: 0 0 8px 2px rgba(234,179,8,0.7); }
+.tl-bulb.green.on  { background: #22c55e; opacity: 1; box-shadow: 0 0 8px 2px rgba(34,197,94,0.7); }
+
+/* ---- PER-LIGHT MANUAL CONTROLS ---- */
+.st-lights-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.st-light-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: rgba(15,23,42,0.05);
+    border-radius: 999px;
+}
+.dark .st-light-ctrl { background: rgba(255,255,255,0.06); }
+.st-light-ctrl-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #6b7280;
+    margin-right: 2px;
+    letter-spacing: 0.04em;
+}
+.dark .st-light-ctrl-label { color: #a1a1aa; }
+.st-light-btn {
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.25);
+    cursor: pointer;
+    opacity: 0.4;
+    transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
+}
+.st-light-btn:hover { opacity: 0.85; transform: scale(1.15); }
+.st-light-btn.red    { background: #ef4444; }
+.st-light-btn.yellow { background: #eab308; }
+.st-light-btn.green  { background: #22c55e; }
+.st-light-btn.active { opacity: 1; transform: scale(1.18); }
+.st-light-btn.red.active    { box-shadow: 0 0 0 2px #fff, 0 0 8px 2px rgba(239,68,68,0.7); }
+.st-light-btn.yellow.active { box-shadow: 0 0 0 2px #fff, 0 0 8px 2px rgba(234,179,8,0.7); }
+.st-light-btn.green.active  { box-shadow: 0 0 0 2px #fff, 0 0 8px 2px rgba(34,197,94,0.7); }
+.dark .st-light-btn.red.active    { box-shadow: 0 0 0 2px #111, 0 0 8px 2px rgba(239,68,68,0.8); }
+.dark .st-light-btn.yellow.active { box-shadow: 0 0 0 2px #111, 0 0 8px 2px rgba(234,179,8,0.8); }
+.dark .st-light-btn.green.active  { box-shadow: 0 0 0 2px #111, 0 0 8px 2px rgba(34,197,94,0.8); }
 
 /* Crosswalks */
 .center-box::before {

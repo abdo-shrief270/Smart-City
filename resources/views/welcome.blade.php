@@ -635,8 +635,10 @@
     <section class="hero">
         <div class="hero-content">
             <h1>Smart City Solutions</h1>
-            <p>Transforming urban life with innovative IoT technology and intelligent management systems for a
-                sustainable future</p>
+            <p>An integrated IoT platform that unifies six intelligent modules — Smart Farm, Smart Parking,
+                Smart Traffic, Smart Lighting, Fire Alarm, and Smart Tank — to monitor crops and irrigation,
+                guide drivers to free spots, optimize traffic flow, control street lighting, detect fires
+                in real time, and manage water resources from a single dashboard.</p>
         </div>
     </section>
 
