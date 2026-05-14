@@ -139,10 +139,23 @@
             display: flex; align-items: center; gap: 0.5rem;
         }
         .logo-icon {
-            width: 32px; height: 32px;
-            background: rgba(255,255,255,0.2); border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 3px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            display: block;
         }
         .navbar-actions { display: flex; align-items: center; gap: 1rem; }
         .nav-link {
@@ -242,6 +255,7 @@
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             padding: 3px;
+            cursor: zoom-in;
         }
         .person-avatar img {
             width: 100%; height: 100%; border-radius: 50%;
@@ -437,7 +451,9 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="{{ url('/') }}" class="navbar-logo">
-                <span class="logo-icon">🏙️</span>
+                <span class="logo-icon">
+                    <img src="{{ asset('logo.jpeg') }}" alt="{{ config('app.name', 'Smart City') }} logo">
+                </span>
                 <span>Smart City</span>
             </a>
             <div class="navbar-actions">
@@ -516,11 +532,10 @@
         <div class="people-grid">
             @foreach($team as $person)
                 <div class="person-card">
-                    <div class="person-avatar">
+                    <div class="person-avatar" data-lightbox="{{ $avatarFor($person) }}">
                         <img src="{{ $avatarFor($person) }}" alt="{{ $person['name'] }}" loading="lazy">
                     </div>
                     <div class="person-name">{{ $person['name'] }}</div>
-                    <div class="person-role">{{ $person['role'] }}</div>
                 </div>
             @endforeach
         </div>
@@ -532,7 +547,7 @@
         <div class="people-grid">
             @foreach($supervisors as $person)
                 <div class="person-card supervisor-card">
-                    <div class="person-avatar">
+                    <div class="person-avatar" data-lightbox="{{ $avatarFor($person) }}">
                         <img src="{{ $avatarFor($person) }}" alt="{{ $person['name'] }}" loading="lazy">
                     </div>
                     <div class="person-name">{{ $person['name'] }}</div>
