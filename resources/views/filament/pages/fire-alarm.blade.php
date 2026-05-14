@@ -45,6 +45,33 @@
             </div>
         </div>
 
+        {{-- Gas Sensor Card --}}
+        <div class="fa-card gas {{ $gasDetected ? 'gas-danger' : '' }}">
+            <div class="fa-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                </svg>
+            </div>
+            <div class="fa-card-body">
+                <div class="fa-card-label">Gas Sensor Value</div>
+                <div class="fa-card-value sensor-val gas-val">
+                    {{ number_format($gasValue) }}
+                    @if($gasDetected)
+                        <span class="fa-gas-alert">⚠ LEAK</span>
+                    @endif
+                </div>
+                <div class="fa-sensor-bar">
+                    @php $gasPct = min(100, round(($gasValue / 4095) * 100)); @endphp
+                    <div class="fa-sensor-fill {{ $gasDetected ? 'hot' : ($gasPct > 40 ? 'warm' : 'cool') }}"
+                         style="width: {{ $gasPct }}%"></div>
+                </div>
+                <div class="fa-sensor-range">0 <span>{{ $gasPct }}%</span> 4095</div>
+            </div>
+            @if($gasDetected)
+                <div class="fa-pulse-ring gas-ring"></div>
+            @endif
+        </div>
+
         {{-- Pump Status Card --}}
         <div class="fa-card pump {{ $pumpActive ? 'pump-on' : 'pump-off' }}">
             <div class="fa-card-icon">
@@ -96,8 +123,8 @@
                     <div class="fa-control-name">Water Pump</div>
                     <div class="fa-control-desc">Manually activate to suppress fire</div>
                 </div>
-                <button wire:click="togglePump" class="fa-pump-btn {{ $pumpActive ? 'active' : '' }}" wire:loading.attr="disabled">
-                    <span wire:loading.remove>
+                <button wire:click="togglePump" class="fa-pump-btn {{ $pumpActive ? 'active' : '' }}" wire:loading.attr="disabled" wire:target="togglePump">
+                    <span wire:loading.remove wire:target="togglePump">
                         @if($pumpActive)
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;display:inline;vertical-align:middle;margin-right:6px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
@@ -110,7 +137,7 @@
                             Start Pump
                         @endif
                     </span>
-                    <span wire:loading>Processing…</span>
+                    <span wire:loading wire:target="togglePump">Processing…</span>
                 </button>
             </div>
 
@@ -121,8 +148,16 @@
                     <span class="fa-info-val">{{ number_format($flameValue) }} / 4095</span>
                 </div>
                 <div class="fa-info-row">
-                    <span class="fa-info-key">Detection Threshold</span>
+                    <span class="fa-info-key">Flame Threshold</span>
                     <span class="fa-info-val text-yellow-500">≥ 1500</span>
+                </div>
+                <div class="fa-info-row">
+                    <span class="fa-info-key">Gas Reading</span>
+                    <span class="fa-info-val">{{ number_format($gasValue) }} / 4095</span>
+                </div>
+                <div class="fa-info-row">
+                    <span class="fa-info-key">Gas Threshold</span>
+                    <span class="fa-info-val text-yellow-500">≥ {{ number_format($gasThreshold) }}</span>
                 </div>
                 <div class="fa-info-row">
                     <span class="fa-info-key">Firebase Path</span>
@@ -198,6 +233,35 @@
 .fa-card.pump-on  { border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff, #fff); }
 .fa-card.pump-off { border-color: #e5e7eb; }
 .dark .fa-card.pump-on  { background: linear-gradient(135deg, #172554, #18181b); }
+
+/* Gas card */
+.fa-card.gas { border-color: #8b5cf6; flex-direction: column; align-items: flex-start; }
+.dark .fa-card.gas { background: #18181b; }
+.fa-card.gas .fa-card-icon { color: #8b5cf6; }
+.fa-card.gas .gas-val { color: #8b5cf6; }
+.fa-card.gas.gas-danger {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #fef2f2, #fff);
+    animation: dangerShake 0.4s ease infinite alternate;
+}
+.dark .fa-card.gas.gas-danger { background: linear-gradient(135deg, #450a0a, #18181b); }
+.fa-card.gas.gas-danger .fa-card-icon { color: #ef4444; }
+.fa-card.gas.gas-danger .gas-val { color: #ef4444; }
+.fa-gas-alert {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
+    animation: badgePulse 0.6s ease infinite alternate;
+}
+.fa-pulse-ring.gas-ring { background: rgba(139, 92, 246, 0.15); }
+.fa-card.gas.gas-danger .fa-pulse-ring.gas-ring { background: rgba(239, 68, 68, 0.15); }
 
 .fa-card-icon svg { width: 40px; height: 40px; }
 .fa-card.danger .fa-card-icon { color: #ef4444; }

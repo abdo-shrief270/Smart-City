@@ -136,14 +136,14 @@
         .smart-parking-container {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(1, 1fr);
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         @media (min-width: 768px) {
@@ -155,13 +155,13 @@
         /* Stat Card */
         .stat-card {
             background-color: white;
-            padding: 1.5rem;
+            padding: 1rem 1.25rem;
             border-radius: 1rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
             border: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         .dark .stat-card {
@@ -252,8 +252,8 @@
         .area-section {
             background-color: #f3f4f6;
             /* gray-100 */
-            padding: 1.5rem;
-            border-radius: 1.5rem;
+            padding: 1rem 1.25rem 1.25rem;
+            border-radius: 1.25rem;
             border: 1px solid #e5e7eb;
             position: relative;
         }
@@ -281,10 +281,10 @@
         }
 
         .slots-grid {
-            margin-top: 2rem;
+            margin-top: 1.5rem;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         @media (min-width: 768px) {

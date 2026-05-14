@@ -129,6 +129,147 @@
             transform: scale(1.05) rotate(15deg);
         }
 
+        .qr-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 4px;
+            overflow: hidden;
+        }
+
+        .qr-toggle img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .qr-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* QR Modal */
+        .qr-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .qr-modal.is-open {
+            display: flex;
+            animation: qrFadeIn 0.2s ease-out;
+        }
+
+        .qr-modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+        }
+
+        .qr-modal-dialog {
+            position: relative;
+            background: var(--card-light);
+            color: var(--text-light);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            animation: qrScaleIn 0.25s ease-out;
+        }
+
+        body.dark-mode .qr-modal-dialog {
+            background: var(--card-dark);
+            color: var(--text-dark);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-mode) .qr-modal-dialog {
+                background: var(--card-dark);
+                color: var(--text-dark);
+            }
+        }
+
+        .qr-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .qr-modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .qr-modal-close {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.6;
+            font-size: 1.5rem;
+            line-height: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .qr-modal-close:hover {
+            opacity: 1;
+        }
+
+        .qr-modal-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .qr-modal-body img {
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+            border-radius: 12px;
+            background: #fff;
+            padding: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .qr-modal-url {
+            font-size: 0.875rem;
+            opacity: 0.75;
+            text-align: center;
+            word-break: break-all;
+        }
+
+        @keyframes qrFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes qrScaleIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
         .admin-btn {
             background: rgba(255, 255, 255, 0.2);
             color: white;
@@ -277,6 +418,14 @@
             position: relative;
             overflow: hidden;
             cursor: pointer;
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .feature-card:focus-visible {
+            outline: 3px solid #667eea;
+            outline-offset: 4px;
         }
 
         body.dark-mode .feature-card {
@@ -450,7 +599,16 @@
                 <span class="logo-icon">🏙️</span>
                 <span>Smart City</span>
             </a>
+            @php
+                $qrValue = url('/about');
+                $qrEncoded = urlencode($qrValue);
+                $qrSmall = "https://api.qrserver.com/v1/create-qr-code/?size=80x80&margin=2&data={$qrEncoded}";
+                $qrLarge = "https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=4&data={$qrEncoded}";
+            @endphp
             <div class="navbar-actions">
+                <button class="qr-toggle" id="qrToggle" aria-label="Show QR code" title="Show QR code">
+                    <img src="{{ $qrSmall }}" alt="QR code" width="36" height="36" loading="lazy">
+                </button>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
                     <span id="themeIcon">🌙</span>
                 </button>
@@ -475,54 +633,69 @@
         <h2 class="section-title">Our Smart Solutions</h2>
         <div class="features-grid">
             <!-- Smart Farm -->
-            <div class="feature-card feature-farm">
+            <a href="{{ url('/admin/smart-farm') }}" class="feature-card feature-farm">
                 <div class="feature-icon">🌾</div>
                 <h3>Smart Farm</h3>
                 <p>Advanced agricultural monitoring and automation system with real-time crop health tracking, soil
                     analysis, and automated irrigation control for optimal yield.</p>
-            </div>
+            </a>
 
             <!-- Smart Parking -->
-            <div class="feature-card feature-parking">
+            <a href="{{ url('/admin/smart-parking') }}" class="feature-card feature-parking">
                 <div class="feature-icon">🅿️</div>
                 <h3>Smart Parking</h3>
                 <p>Intelligent parking management with real-time space detection, automated guidance systems, and
                     seamless payment integration for hassle-free parking.</p>
-            </div>
+            </a>
 
             <!-- Smart Traffic -->
-            <div class="feature-card feature-traffic">
+            <a href="{{ url('/admin/smart-traffic') }}" class="feature-card feature-traffic">
                 <div class="feature-icon">🚦</div>
                 <h3>Smart Traffic</h3>
                 <p>AI-powered traffic flow optimization, adaptive signal control, and congestion prediction to reduce
                     travel time and improve urban mobility.</p>
-            </div>
+            </a>
 
             <!-- Smart Lighting -->
-            <div class="feature-card feature-lighting">
+            <a href="{{ url('/admin/smart-lighting') }}" class="feature-card feature-lighting">
                 <div class="feature-icon">💡</div>
                 <h3>Smart Lighting</h3>
                 <p>Energy-efficient street lighting with motion sensors, automatic brightness adjustment, and scheduled
                     operation for significant cost savings.</p>
-            </div>
+            </a>
 
             <!-- Fire Alarm -->
-            <div class="feature-card feature-fire">
+            <a href="{{ url('/admin/fire-alarm') }}" class="feature-card feature-fire">
                 <div class="feature-icon">🚨</div>
                 <h3>Fire Alarm</h3>
                 <p>Advanced fire detection and alert system with multi-sensor technology, instant notifications, and
                     integrated emergency response protocols.</p>
-            </div>
+            </a>
 
             <!-- Smart Tank -->
-            <div class="feature-card feature-tank">
+            <a href="{{ url('/admin/smart-tank') }}" class="feature-card feature-tank">
                 <div class="feature-icon">💧</div>
                 <h3>Smart Tank</h3>
                 <p>Intelligent water management with level monitoring, automated filling control, quality sensors, and
                     consumption analytics for efficient resource usage.</p>
-            </div>
+            </a>
         </div>
     </section>
+
+    <!-- QR Modal -->
+    <div class="qr-modal" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+        <div class="qr-modal-backdrop" data-qr-close></div>
+        <div class="qr-modal-dialog">
+            <div class="qr-modal-header">
+                <h3 id="qrModalTitle">Scan QR code</h3>
+                <button type="button" class="qr-modal-close" data-qr-close aria-label="Close">&times;</button>
+            </div>
+            <div class="qr-modal-body">
+                <img src="{{ $qrLarge }}" alt="QR code" width="320" height="320">
+                <p class="qr-modal-url">{{ $qrValue }}</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">
@@ -578,6 +751,30 @@
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (!localStorage.getItem('theme')) {
                 applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+
+        // QR Modal
+        const qrToggle = document.getElementById('qrToggle');
+        const qrModal = document.getElementById('qrModal');
+
+        function openQrModal() {
+            qrModal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeQrModal() {
+            qrModal.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+
+        qrToggle.addEventListener('click', openQrModal);
+        qrModal.querySelectorAll('[data-qr-close]').forEach((el) => {
+            el.addEventListener('click', closeQrModal);
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && qrModal.classList.contains('is-open')) {
+                closeQrModal();
             }
         });
     </script>

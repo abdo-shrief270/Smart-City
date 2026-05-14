@@ -9,26 +9,18 @@ class ParkingSeeder extends Seeder
 {
     public function run(): void
     {
-        // Area A (1-8)
-        for ($i = 1; $i <= 8; $i++) {
-            ParkingSlot::firstOrCreate([
-                'area' => 'A',
-                'slot_number' => $i,
-            ], [
-                'status' => 'available',
-                'cost_per_hour' => 10.00,
-            ]);
-        }
+        $slotsPerArea = 4;
 
-        // Area B (1-8)
-        for ($i = 1; $i <= 8; $i++) {
-            ParkingSlot::firstOrCreate([
-                'area' => 'B',
-                'slot_number' => $i,
-            ], [
-                'status' => 'available',
-                'cost_per_hour' => 10.00,
-            ]);
+        foreach (['A', 'B'] as $area) {
+            for ($i = 1; $i <= $slotsPerArea; $i++) {
+                ParkingSlot::firstOrCreate([
+                    'area' => $area,
+                    'slot_number' => $i,
+                ], [
+                    'status' => 'available',
+                    'cost_per_hour' => 10.00,
+                ]);
+            }
         }
     }
 }

@@ -61,15 +61,82 @@ class FirebaseService
         }
 
         try {
-            $response = Http::put($url, $value);
+            $response = Http::withBody(json_encode($value), 'application/json')->put($url);
             return $response->successful();
         } catch (\Exception $e) {
             return false;
         }
     }
 
+    /**
+     * Pull new gate-log entries from Firebase into the gate_logs table.
+     * Deduplicated by firebase_key. Returns the number of rows inserted.
+     *
+     * Expected Firebase shape (each child uses a Firebase push-ID as key):
+     * gate-logs/
+     *   -NabcXYZ…/
+     *     plate     : "ABC-1234"
+     *     gate      : 1
+     *     direction : "in" | "out"
+     *     timestamp : 1712345678      (unix seconds; optional — falls back to now)
+     */
+    public function syncGateLogsFromFirebase(): int
+    {
+        $logs = $this->get('gate-logs');
+
+        if (!is_array($logs)) {
+            return 0;
+        }
+
+        $existingKeys = \App\Models\GateLog::query()
+            ->whereNotNull('firebase_key')
+            ->pluck('firebase_key')
+            ->all();
+
+        $existing = array_flip($existingKeys);
+        $inserted = 0;
+
+        foreach ($logs as $key => $entry) {
+            if (!is_array($entry) || isset($existing[$key])) {
+                continue;
+            }
+
+            $plate = trim((string) ($entry['plate'] ?? $entry['plate_number'] ?? ''));
+            $gate = (int) ($entry['gate'] ?? $entry['gate_number'] ?? 0);
+            $direction = strtolower((string) ($entry['direction'] ?? ''));
+
+            if ($plate === '' || $gate < 1 || !in_array($direction, ['in', 'out'], true)) {
+                continue;
+            }
+
+            $timestamp = $entry['timestamp'] ?? $entry['logged_at'] ?? null;
+            $loggedAt = is_numeric($timestamp)
+                ? \Carbon\Carbon::createFromTimestamp((int) $timestamp)
+                : (is_string($timestamp) ? \Carbon\Carbon::parse($timestamp) : now());
+
+            \App\Models\GateLog::create([
+                'firebase_key' => $key,
+                'plate_number' => strtoupper($plate),
+                'gate_number'  => $gate,
+                'direction'    => $direction,
+                'logged_at'    => $loggedAt,
+            ]);
+
+            $inserted++;
+        }
+
+        return $inserted;
+    }
+
     public function syncToDatabase(): void
     {
+        // 0. Gate Logs Sync (car plates at city gates)
+        try {
+            $this->syncGateLogsFromFirebase();
+        } catch (\Throwable $e) {
+            // Non-fatal: continue with other sync jobs even if gate-logs fails.
+        }
+
         // 1. Smart Tank Sync
         $tankData = $this->get('smart-tank');
         if ($tankData) {

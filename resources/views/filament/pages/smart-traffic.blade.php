@@ -27,49 +27,51 @@
      x-init="init()">
 
 
-    {{-- Header --}}
-    <div class="st-header">
-        <div class="st-mode-label">
-            Current Mode:
-            <span class="st-mode-value {{ $mode }}">{{ ucfirst($mode) }}</span>
-        </div>
-        <button wire:click="toggleMode" class="st-toggle-btn {{ $mode }}">
-            Switch to {{ $mode === 'manual' ? 'Auto' : 'Manual' }}
+    {{-- Compact control dock: mode pill + (auto: timer form) / (manual: direction buttons) --}}
+    <div class="st-dock">
+        <button
+            type="button"
+            wire:click="toggleMode"
+            wire:target="toggleMode"
+            wire:loading.attr="disabled"
+            class="st-dock-mode st-{{ $mode }}"
+            title="Switch to {{ $mode === 'manual' ? 'Auto' : 'Manual' }} mode"
+        >
+            <span class="st-dock-dot"></span>
+            <span wire:loading.remove wire:target="toggleMode">
+                <strong>{{ strtoupper($mode) }}</strong>
+                <span class="st-dock-hint">→ {{ $mode === 'manual' ? 'Auto' : 'Manual' }}</span>
+            </span>
+            <span wire:loading wire:target="toggleMode">Switching…</span>
         </button>
-    </div>
 
-    {{-- Auto Mode Settings --}}
-    @if($mode === 'auto')
-    <div class="st-settings-bar">
-        <div class="st-settings-group">
-            <span class="st-settings-label">Green Light Duration</span>
-            <div class="st-input-wrap">
-                <input type="number" wire:model.defer="greenTimer" class="st-input" min="5" />
-                <span class="st-input-unit">sec</span>
+        @if($mode === 'auto')
+            <div class="st-dock-inline">
+                <span class="st-dock-label">Green</span>
+                <div class="st-input-wrap">
+                    <input type="number" wire:model.defer="greenTimer" class="st-input" min="5" />
+                    <span class="st-input-unit">s</span>
+                </div>
+                <button wire:click="saveTimers" class="st-save-btn">Save</button>
+                <div class="st-countdown" :class="{ urgent: timeLeft <= 5 }">
+                    Next in <strong x-text="timeLeft + 's'"></strong>
+                </div>
             </div>
-            <button wire:click="saveTimers" class="st-save-btn">Save</button>
-        </div>
-        <div class="st-countdown" :class="{ urgent: timeLeft <= 5 }">
-            Next switch in <strong x-text="timeLeft + 's'"></strong>
-        </div>
+        @else
+            <div class="st-dock-inline">
+                <button wire:click="setDirection('ns_green')"
+                        class="st-dir-btn {{ $direction === 'ns_green' ? 'active' : '' }}"
+                        {{ $isYellow ? 'disabled' : '' }}>
+                    ↕ N/S
+                </button>
+                <button wire:click="setDirection('ew_green')"
+                        class="st-dir-btn {{ $direction === 'ew_green' ? 'active' : '' }}"
+                        {{ $isYellow ? 'disabled' : '' }}>
+                    ↔ E/W
+                </button>
+            </div>
+        @endif
     </div>
-    @endif
-
-    {{-- Manual Controls --}}
-    @if($mode === 'manual')
-    <div class="st-manual-controls">
-        <button wire:click="setDirection('ns_green')"
-                class="st-dir-btn {{ $direction === 'ns_green' ? 'active' : '' }}"
-                {{ $isYellow ? 'disabled' : '' }}>
-            ↕ N/S Green
-        </button>
-        <button wire:click="setDirection('ew_green')"
-                class="st-dir-btn {{ $direction === 'ew_green' ? 'active' : '' }}"
-                {{ $isYellow ? 'disabled' : '' }}>
-            ↔ E/W Green
-        </button>
-    </div>
-    @endif
 
     {{-- ===================== INTERSECTION ===================== --}}
     @php
@@ -187,145 +189,142 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
-    padding: 1rem;
+    gap: 0.6rem;
+    padding: 0.5rem;
     font-family: 'Inter', sans-serif;
+    max-height: calc(100dvh - 8rem);
+    overflow: hidden;
 }
 
-/* --- HEADER --- */
-.st-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    max-width: 680px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 1rem;
-    padding: 1rem 1.5rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-}
-.dark .st-header { background: #18181b; border-color: #27272a; }
-
-.st-mode-label { font-size: 1rem; font-weight: 600; color: #6b7280; }
-.st-mode-value.manual { color: #3b82f6; }
-.st-mode-value.auto { color: #10b981; }
-
-.st-toggle-btn {
-    padding: 0.5rem 1.25rem;
-    border-radius: 0.5rem;
-    border: none;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.st-toggle-btn.manual { background: #dcfce7; color: #16a34a; }
-.st-toggle-btn.manual:hover { background: #bbf7d0; }
-.st-toggle-btn.auto { background: #dbeafe; color: #2563eb; }
-.st-toggle-btn.auto:hover { background: #bfdbfe; }
-.dark .st-toggle-btn.manual { background: rgba(22,163,74,0.2); color: #4ade80; }
-.dark .st-toggle-btn.auto { background: rgba(37,99,235,0.2); color: #60a5fa; }
-
-/* --- SETTINGS BAR (AUTO) --- */
-.st-settings-bar {
+/* ================ COMPACT DOCK (mode + controls in one row) ================ */
+.st-dock {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
+    gap: 0.75rem;
     flex-wrap: wrap;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 1rem;
-    padding: 1rem 2rem;
-    width: 100%;
-    max-width: 680px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    padding: 0.45rem 0.75rem;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(15,23,42,0.1);
+    border-radius: 999px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    backdrop-filter: blur(8px);
+    font-size: 0.8rem;
 }
-.dark .st-settings-bar { background: #18181b; border-color: #27272a; }
+.dark .st-dock { background: rgba(24,24,27,0.9); border-color: rgba(255,255,255,0.1); }
 
-.st-settings-group { display: flex; align-items: center; gap: 0.75rem; }
-.st-settings-label { font-size: 0.875rem; font-weight: 600; color: #6b7280; white-space: nowrap; }
-.dark .st-settings-label { color: #9ca3af; }
+.st-dock-mode {
+    display: flex; align-items: center; gap: 0.45rem;
+    padding: 0.3rem 0.75rem;
+    border: none; border-radius: 999px;
+    background: transparent;
+    font-weight: 700; font-size: 0.75rem; cursor: pointer;
+    color: #1f2937;
+    transition: background 0.15s, transform 0.15s;
+    white-space: nowrap;
+}
+.dark .st-dock-mode { color: #e4e4e7; }
+.st-dock-mode:hover:not(:disabled) { background: rgba(15,23,42,0.05); transform: translateY(-1px); }
+.dark .st-dock-mode:hover:not(:disabled) { background: rgba(255,255,255,0.06); }
+.st-dock-mode:disabled { cursor: not-allowed; opacity: 0.7; }
+.st-dock-mode.st-manual { color: #2563eb; }
+.st-dock-mode.st-auto   { color: #059669; }
+.st-dock-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; }
+.st-dock-mode.st-manual .st-dock-dot { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.7); }
+.st-dock-mode.st-auto   .st-dock-dot { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.7); }
+.st-dock-hint { font-size: 0.65rem; color: #6b7280; font-weight: 600; margin-left: 0.2rem; }
+.dark .st-dock-hint { color: #a1a1aa; }
+
+.st-dock-inline {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding-left: 0.75rem;
+    border-left: 1px solid rgba(15,23,42,0.1);
+}
+.dark .st-dock-inline { border-left-color: rgba(255,255,255,0.1); }
+
+.st-dock-label {
+    font-size: 0.7rem; font-weight: 700; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.06em;
+}
+.dark .st-dock-label { color: #a1a1aa; }
 
 .st-input-wrap { position: relative; }
 .st-input {
-    border: 2px solid #e5e7eb;
-    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.4rem;
     background: #f9fafb;
     color: #111827;
-    padding: 0.4rem 2.5rem 0.4rem 0.4whenrem;
-    font-size: 1rem;
+    padding: 0.25rem 1.4rem 0.25rem 0.5rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    width: 120px;
+    width: 64px;
     text-align: center;
     transition: border-color 0.2s;
 }
 .st-input:focus { outline: none; border-color: #10b981; }
 .dark .st-input { background: #1f1f23; border-color: #3f3f46; color: #fff; }
-.st-input-unit { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: #9ca3af; pointer-events: none; }
+.st-input-unit { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 0.65rem; color: #9ca3af; pointer-events: none; }
 
 .st-save-btn {
     background: #10b981; color: #fff;
-    padding: 0.4rem 1rem;
-    border-radius: 0.5rem; border: none;
-    font-weight: 700; cursor: pointer;
+    padding: 0.3rem 0.75rem;
+    border-radius: 0.4rem; border: none;
+    font-weight: 700; font-size: 0.75rem; cursor: pointer;
     transition: all 0.2s;
     box-shadow: 0 2px 6px rgba(16,185,129,0.3);
 }
 .st-save-btn:hover { background: #059669; transform: translateY(-1px); }
 
 .st-countdown {
-    font-size: 0.9rem; font-weight: 600;
+    font-size: 0.75rem; font-weight: 600;
     background: #ecfdf5; color: #10b981;
-    padding: 0.3rem 0.75rem; border-radius: 999px;
-    transition: all 0.3s;
+    padding: 0.2rem 0.6rem; border-radius: 999px;
+    transition: all 0.3s; white-space: nowrap;
 }
 .st-countdown.urgent { background: #fef2f2; color: #ef4444; animation: urgentPulse 0.8s infinite alternate; }
 .dark .st-countdown { background: rgba(16,185,129,0.15); color: #34d399; }
 .dark .st-countdown.urgent { background: rgba(239,68,68,0.15); color: #f87171; }
 @keyframes urgentPulse { from { opacity: 1; } to { opacity: 0.6; } }
 
-/* --- MANUAL CONTROLS --- */
-.st-manual-controls {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    width: 100%;
-    max-width: 500px;
-}
 .st-dir-btn {
-    flex: 1;
-    min-width: 160px;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.75rem; border: 2px solid #e5e7eb;
+    padding: 0.3rem 0.8rem;
+    border-radius: 0.4rem; border: 1px solid #e5e7eb;
     background: #f3f4f6; color: #374151;
-    font-weight: 700; font-size: 1rem;
+    font-weight: 700; font-size: 0.75rem;
     cursor: pointer; transition: all 0.2s;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    white-space: nowrap;
 }
 .dark .st-dir-btn { background: #27272a; border-color: #3f3f46; color: #e4e4e7; }
-.st-dir-btn:hover:not(:disabled) { background: #e5e7eb; transform: translateY(-2px); }
+.st-dir-btn:hover:not(:disabled) { background: #e5e7eb; transform: translateY(-1px); }
 .dark .st-dir-btn:hover:not(:disabled) { background: #3f3f46; }
-.st-dir-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; box-shadow: 0 0 14px rgba(59,130,246,0.4); }
+.st-dir-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; box-shadow: 0 0 10px rgba(59,130,246,0.4); }
 .dark .st-dir-btn.active { background: #2563eb; border-color: #2563eb; }
 .st-dir-btn:disabled { opacity: 0.5; cursor: not-allowed; animation: btnPulse 1s infinite alternate; }
 @keyframes btnPulse { from { transform: scale(1); } to { transform: scale(0.97); opacity: 0.4; } }
 
 /* =============================================
-   INTERSECTION LAYOUT
+   INTERSECTION LAYOUT (scales down to fit viewport)
 ============================================= */
 .st-intersection-wrap {
+    /* Fluid scale: 1 on tall screens, shrinks down to 0.5 on very short ones.
+       CSS dimensional calc: (length / length) = unitless scalar. */
+    --st-scale: max(0.5, min(1, calc((100dvh - 13rem) / 560px)));
     display: flex;
     justify-content: center;
-    align-items: center;
-    width: 100%;
+    align-items: flex-start;
+    width: calc(560px * var(--st-scale));
+    height: calc(560px * var(--st-scale));
+    max-width: 100%;
+    overflow: visible;
 }
 
 .st-intersection {
     position: relative;
     width: 560px;
     height: 560px;
+    flex-shrink: 0;
+    transform: scale(var(--st-scale));
+    transform-origin: top left;
     /* Grid of 4 grass quads + road cross */
 }
 
