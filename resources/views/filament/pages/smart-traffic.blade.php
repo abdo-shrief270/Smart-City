@@ -1,33 +1,8 @@
 <x-filament-panels::page>
-<div wire:poll.3000ms="pollData" class="st-page"
-     x-data="{
-         timeLeft: 0,
-         _iv: null,
-         _triggered: false,
-         init() {
-             this.tick();
-             this._iv = setInterval(() => this.tick(), 1000);
-         },
-         tick() {
-             const nst = $wire.nextSwitchTime;
-             if (!nst) { this.timeLeft = 0; this._triggered = false; return; }
-             const now = Math.floor(Date.now() / 1000);
-             const left = nst - now;
-             this.timeLeft = Math.max(0, left);
-
-             // When countdown hits 0, force an immediate server poll to switch lights
-             if (left <= 0 && !this._triggered) {
-                 this._triggered = true;
-                 $wire.pollData().then(() => { this._triggered = false; });
-             }
-             // Reset trigger when new nextSwitchTime arrives
-             if (left > 2) { this._triggered = false; }
-         }
-     }"
-     x-init="init()">
+<div wire:poll.3000ms="pollData" class="st-page">
 
 
-    {{-- Compact control dock: mode pill + (auto: timer form) / (manual: direction buttons) --}}
+    {{-- Compact control dock: mode pill + (auto: live indicator) / (manual: per-light controls) --}}
     <div class="st-dock">
         <button
             type="button"
@@ -47,15 +22,10 @@
 
         @if($mode === 'auto')
             <div class="st-dock-inline">
-                <span class="st-dock-label">Green</span>
-                <div class="st-input-wrap">
-                    <input type="number" wire:model.defer="greenTimer" class="st-input" min="5" />
-                    <span class="st-input-unit">s</span>
-                </div>
-                <button wire:click="saveTimers" class="st-save-btn">Save</button>
-                <div class="st-countdown" :class="{ urgent: timeLeft <= 5 }">
-                    Next in <strong x-text="timeLeft + 's'"></strong>
-                </div>
+                <span class="st-live-badge">
+                    <span class="st-live-dot"></span>
+                    Live from Firebase
+                </span>
             </div>
         @else
             <div class="st-dock-inline st-lights-grid">
@@ -135,17 +105,15 @@
             <div class="dash-v"></div>
             <div class="dash-h"></div>
 
-            {{-- ---- CENTER BOX ---- --}}
+            {{-- ---- CENTER CIRCLE ---- --}}
             <div class="center-box">
-                @if($mode === 'auto')
-                    <div class="center-timer" :class="{ urgent: timeLeft <= 3 }" x-text="timeLeft"></div>
-                @else
-                    <div class="center-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:30px;height:30px;opacity:0.4;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
-                        </svg>
-                    </div>
-                @endif
+                <div class="crosswalk crosswalk-west"></div>
+                <div class="crosswalk crosswalk-east"></div>
+                <div class="center-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:30px;height:30px;opacity:0.4;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+                    </svg>
+                </div>
             </div>
 
             {{-- ---- TRAFFIC LIGHTS (one per direction, right-of-road) ---- --}}
@@ -231,59 +199,33 @@
 }
 .dark .st-dock-label { color: #a1a1aa; }
 
-.st-input-wrap { position: relative; }
-.st-input {
-    border: 1px solid #e5e7eb;
-    border-radius: 0.4rem;
-    background: #f9fafb;
-    color: #111827;
-    padding: 0.25rem 1.4rem 0.25rem 0.5rem;
-    font-size: 0.8rem;
+.st-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    width: 64px;
-    text-align: center;
-    transition: border-color 0.2s;
-}
-.st-input:focus { outline: none; border-color: #10b981; }
-.dark .st-input { background: #1f1f23; border-color: #3f3f46; color: #fff; }
-.st-input-unit { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 0.65rem; color: #9ca3af; pointer-events: none; }
-
-.st-save-btn {
-    background: #10b981; color: #fff;
-    padding: 0.3rem 0.75rem;
-    border-radius: 0.4rem; border: none;
-    font-weight: 700; font-size: 0.75rem; cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 6px rgba(16,185,129,0.3);
-}
-.st-save-btn:hover { background: #059669; transform: translateY(-1px); }
-
-.st-countdown {
-    font-size: 0.75rem; font-weight: 600;
-    background: #ecfdf5; color: #10b981;
-    padding: 0.2rem 0.6rem; border-radius: 999px;
-    transition: all 0.3s; white-space: nowrap;
-}
-.st-countdown.urgent { background: #fef2f2; color: #ef4444; animation: urgentPulse 0.8s infinite alternate; }
-.dark .st-countdown { background: rgba(16,185,129,0.15); color: #34d399; }
-.dark .st-countdown.urgent { background: rgba(239,68,68,0.15); color: #f87171; }
-@keyframes urgentPulse { from { opacity: 1; } to { opacity: 0.6; } }
-
-.st-dir-btn {
-    padding: 0.3rem 0.8rem;
-    border-radius: 0.4rem; border: 1px solid #e5e7eb;
-    background: #f3f4f6; color: #374151;
-    font-weight: 700; font-size: 0.75rem;
-    cursor: pointer; transition: all 0.2s;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     white-space: nowrap;
 }
-.dark .st-dir-btn { background: #27272a; border-color: #3f3f46; color: #e4e4e7; }
-.st-dir-btn:hover:not(:disabled) { background: #e5e7eb; transform: translateY(-1px); }
-.dark .st-dir-btn:hover:not(:disabled) { background: #3f3f46; }
-.st-dir-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; box-shadow: 0 0 10px rgba(59,130,246,0.4); }
-.dark .st-dir-btn.active { background: #2563eb; border-color: #2563eb; }
-.st-dir-btn:disabled { opacity: 0.5; cursor: not-allowed; animation: btnPulse 1s infinite alternate; }
-@keyframes btnPulse { from { transform: scale(1); } to { transform: scale(0.97); opacity: 0.4; } }
+.dark .st-live-badge { color: #34d399; background: rgba(16,185,129,0.15); }
+.st-live-dot {
+    width: 0.5rem; height: 0.5rem;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
+    animation: livePulse 1.5s ease-out infinite;
+}
+@keyframes livePulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+    70%  { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
 
 /* =============================================
    INTERSECTION LAYOUT (scales down to fit viewport)
@@ -394,7 +336,7 @@
     z-index: 3;
 }
 
-/* ---- CENTER BOX ---- */
+/* ---- CENTER CIRCLE (roundabout island) ---- */
 .center-box {
     position: absolute;
     left: 190px; top: 190px;
@@ -405,18 +347,8 @@
     align-items: center;
     justify-content: center;
     border: 3px solid #374151;
+    border-radius: 50%;
 }
-
-.center-timer {
-    font-size: 4rem;
-    font-weight: 900;
-    color: #fff;
-    font-family: monospace;
-    text-shadow: 0 0 20px rgba(255,255,255,0.3);
-    transition: color 0.2s;
-}
-.center-timer.urgent { color: #ef4444; text-shadow: 0 0 20px rgba(239,68,68,0.6); }
-
 
 .tl-bulb {
     width: 13px;
@@ -480,7 +412,7 @@
 .dark .st-light-btn.yellow.active { box-shadow: 0 0 0 2px #111, 0 0 8px 2px rgba(234,179,8,0.8); }
 .dark .st-light-btn.green.active  { box-shadow: 0 0 0 2px #111, 0 0 8px 2px rgba(34,197,94,0.8); }
 
-/* Crosswalks */
+/* Crosswalks — north & south (horizontal stripes) */
 .center-box::before {
     content: '';
     position: absolute;
@@ -492,6 +424,18 @@
     position: absolute;
     bottom: -12px; left: 0; right: 0; height: 10px;
     background-image: repeating-linear-gradient(to right, #e5e7eb 0px, #e5e7eb 12px, transparent 12px, transparent 24px);
+}
+
+/* Crosswalks — east & west (vertical stripes) */
+.crosswalk-west {
+    position: absolute;
+    left: -12px; top: 0; bottom: 0; width: 10px;
+    background-image: repeating-linear-gradient(to bottom, #e5e7eb 0px, #e5e7eb 12px, transparent 12px, transparent 24px);
+}
+.crosswalk-east {
+    position: absolute;
+    right: -12px; top: 0; bottom: 0; width: 10px;
+    background-image: repeating-linear-gradient(to bottom, #e5e7eb 0px, #e5e7eb 12px, transparent 12px, transparent 24px);
 }
 
 
@@ -523,25 +467,25 @@
 /* Northbound traffic (going up) — light on driver's right = EAST side, near south edge of intersection */
 .tl-light.north {
     bottom: 120px;
-    left: 340px;
+    left: 360px;
 }
 
 /* Southbound traffic (going down) — light on driver's right = WEST side, near north edge */
 .tl-light.south {
     top: 120px;
-    right: 340px;
+    right: 360px;
 }
 
 /* Eastbound traffic (going right) — light on driver's right = SOUTH side, near west edge */
 .tl-light.east {
     top: 340px;
-    left: 135px;
+    left: 160px;
 }
 
 /* Westbound traffic (going left) — light on driver's right = NORTH side, near east edge */
 .tl-light.west {
     bottom: 340px;
-    right: 135px;
+    right: 160px;
 }
 </style>
 </x-filament-panels::page>
