@@ -92,14 +92,24 @@
         }
 
         .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            overflow: hidden;
+            padding: 3px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 7px;
+            display: block;
         }
 
         .navbar-actions {
@@ -596,7 +606,9 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="/" class="navbar-logo">
-                <span class="logo-icon">🏙️</span>
+                <span class="logo-icon">
+                    <img src="{{ asset('logo.jpeg') }}" alt="{{ config('app.name', 'Smart City') }} logo">
+                </span>
                 <span>Smart City</span>
             </a>
             @php

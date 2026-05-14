@@ -62,6 +62,14 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::USER_MENU_BEFORE,
                 fn (): View => view('filament.navbar.qr-code'),
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): View => view('filament.navbar.floating-logo'),
+            )
+            ->brandLogo(fn () => asset('logo.jpeg'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(asset('logo.jpeg'))
+            ->defaultAvatarProvider(\App\Filament\AvatarProviders\LogoAvatarProvider::class)
             ->userMenuItems([
                 MenuItem::make()
                     ->label('Landing Page')
