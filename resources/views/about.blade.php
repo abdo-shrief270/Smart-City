@@ -24,7 +24,7 @@
         a blueprint for scalable municipal IoT deployments.';
 
     $team = [
-        ['name' => 'Mahmoud Eltoukhy',  'role' => 'Team Leader', 'image' => asset('Team-Images/elteeez.jpeg')],
+        ['name' => 'Mahmoud Eltoukhy',  'role' => 'Team Leader', 'image' => asset('Team-Images/mahmoud.jpeg')],
         ['name' => 'Kareem Salah',   'role' => 'Web Developer', 'image' => asset('Team-Images/kareem.jpeg')],
         ['name' => 'Basmala Hamdy',  'role' => 'Smart Lighting', 'image' => asset('Team-Images/basmala.jpeg')],
         ['name' => 'Hossam Ghanem',   'role' => 'Smart Traffic', 'image' => asset('Team-Images/hossam.jpeg')],
@@ -38,7 +38,7 @@
 
     $supervisors = [
         [
-            'name' => 'Proff. Mahmoud Ibrahim',
+            'name' => 'Prof. Mahmoud Ibrahim',
             'role' => 'Project Supervisor',
             'image' => asset('Team-Images/dr.mahmoud.jpeg'),
         ],
