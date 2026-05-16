@@ -26,11 +26,6 @@ class SmartLighting extends Page
         return 'Smart Lighting';
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'IoT Devices';
-    }
-
     public static function getNavigationSort(): ?int
     {
         return 4;
@@ -64,7 +59,7 @@ class SmartLighting extends Page
     public function toggleMode(): void
     {
         $this->mode = $this->mode === 'manual' ? 'auto' : 'manual';
-        
+
         // Sync to Firebase
         $firebase = app(FirebaseService::class);
         $firebase->set('smart-lighting/mode', $this->mode);
@@ -92,7 +87,7 @@ class SmartLighting extends Page
             // Sync to Firebase
             $firebase = app(FirebaseService::class);
             $firebase->set("smart-lighting/lights/{$index}", $this->lights[$index]);
-            
+
             Notification::make()
                 ->title('Light ' . ($index + 1) . ' turned ' . ($this->lights[$index] ? 'On' : 'Off'))
                 ->success()

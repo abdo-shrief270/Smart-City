@@ -23,11 +23,6 @@ class FireAlarm extends Page
         return 'Fire Alarm';
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'IoT Devices';
-    }
-
     public static function getNavigationSort(): ?int
     {
         return 6;

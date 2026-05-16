@@ -38,6 +38,10 @@ class RoleResource extends Resource
     use Essentials\HasNavigation;
     use HasShieldFormComponents;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Settings';
+    }
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema

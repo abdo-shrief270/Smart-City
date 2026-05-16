@@ -23,11 +23,6 @@ class SmartTank extends Page
         return 'Water Tank';
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'IoT Devices';
-    }
-
     public static function getNavigationSort(): ?int
     {
         return 1;

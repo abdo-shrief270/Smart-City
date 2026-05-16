@@ -33,11 +33,6 @@ class SmartParking extends Page implements HasActions
         return 'Smart Parking';
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'IoT Devices';
-    }
-
     public static function getNavigationSort(): ?int
     {
         return 3;

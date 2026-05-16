@@ -25,11 +25,6 @@ class SmartTraffic extends Page
         return 'Smart Traffic';
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'IoT Devices';
-    }
-
     public static function getNavigationSort(): ?int
     {
         return 5;

@@ -22,11 +22,6 @@ class GateLogResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'plate_number';
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'IoT Devices';
-    }
-
     public static function getNavigationLabel(): string
     {
         return 'Gate Logs';

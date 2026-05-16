@@ -22,11 +22,6 @@ class ParkingSlotResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'slot_number';
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'IoT Devices';
-    }
-
     public static function getNavigationLabel(): string
     {
         return 'Parking Slots';

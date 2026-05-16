@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            // ->maxContentWidth('full')
+             ->maxContentWidth('full')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -66,6 +66,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_END,
                 fn (): View => view('filament.navbar.floating-logo'),
             )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): View => view('filament.navbar.hide-expand-sidebar'),
+            )
             ->brandName(config('app.name', 'Smart City'))
             ->favicon(asset('logo.jpeg'))
             ->defaultAvatarProvider(\App\Filament\AvatarProviders\LogoAvatarProvider::class)
@@ -84,7 +88,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarFullyCollapsibleOnDesktop(true)
             ->spa()
             ->darkMode()
-            // ->topNavigation()
+            ->topNavigation()
             ->font('Cairo')
             ->colors([
                 'danger' => Color::Rose,

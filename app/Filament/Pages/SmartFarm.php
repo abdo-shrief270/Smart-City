@@ -23,11 +23,6 @@ class SmartFarm extends Page
         return 'Smart Farm';
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'IoT Devices';
-    }
-
     public static function getNavigationSort(): ?int
     {
         return 2;

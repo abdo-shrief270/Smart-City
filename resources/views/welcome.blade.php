@@ -624,6 +624,9 @@
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
                     <span id="themeIcon">🌙</span>
                 </button>
+                <a href="{{ url('/about') }}" class="admin-btn">
+                    About
+                </a>
                 <a href="{{ url('/admin') }}" class="admin-btn">
                     Admin Panel
                 </a>
@@ -635,10 +638,7 @@
     <section class="hero">
         <div class="hero-content">
             <h1>Smart City Solutions</h1>
-            <p>An integrated IoT platform that unifies six intelligent modules — Smart Farm, Smart Parking,
-                Smart Traffic, Smart Lighting, Fire Alarm, and Smart Tank — to monitor crops and irrigation,
-                guide drivers to free spots, optimize traffic flow, control street lighting, detect fires
-                in real time, and manage water resources from a single dashboard.</p>
+            <p>An integrated IoT platform unifying six smart modules in one dashboard.</p>
         </div>
     </section>
 

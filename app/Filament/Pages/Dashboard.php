@@ -4,15 +4,33 @@ namespace App\Filament\Pages;
 
 use App\Filament\Resources\ParkingSlots\ParkingSlotResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Widgets\SmartFarmWidget;
+use App\Filament\Widgets\SmartParkingWidget;
+use App\Filament\Widgets\SmartTankWidget;
+use App\Filament\Widgets\StatsOverviewWidget;
+use App\Filament\Widgets\SystemAlertsWidget;
 use App\Services\FirebaseService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Widgets\AccountWidget;
 use Illuminate\Support\Facades\Auth;
 
 class Dashboard extends BaseDashboard
 {
+    public function getWidgets(): array
+    {
+        return [
+            AccountWidget::class,
+            StatsOverviewWidget::class,
+            SystemAlertsWidget::class,
+            SmartFarmWidget::class,
+            SmartTankWidget::class,
+            SmartParkingWidget::class,
+        ];
+    }
+
     public function getHeaderActions(): array
     {
         return [
