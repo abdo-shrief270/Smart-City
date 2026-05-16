@@ -38,9 +38,14 @@
 
     $supervisors = [
         [
-            'name' => 'Supervisor Name',
+            'name' => 'Proff. Mahmoud Ibrahim',
             'role' => 'Project Supervisor',
-            'image' => null,
+            'image' => asset('Team-Images/dr.mahmoud.jpeg'),
+        ],
+        [
+            'name' => 'Dr. Esraa Elrefaey',
+            'role' => 'Project Supervisor',
+            'image' => asset('Team-Images/dr.esraa.jpeg'),
         ],
     ];
 
@@ -551,7 +556,7 @@
                         <img src="{{ $avatarFor($person) }}" alt="{{ $person['name'] }}" loading="lazy">
                     </div>
                     <div class="person-name">{{ $person['name'] }}</div>
-                    <div class="person-role">{{ $person['role'] }}</div>
+{{--                    <div class="person-role">{{ $person['role'] }}</div>--}}
                 </div>
             @endforeach
         </div>
