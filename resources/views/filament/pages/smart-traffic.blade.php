@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    {{-- ===================== INTERSECTION ===================== --}}
+    {{-- =====  ================ INTERSECTION ===================== --}}
     @php
         $aGreen = $light === 'A';
         $bGreen = $light === 'B';
@@ -199,8 +199,8 @@
     border-radius: 6px;
     box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 }
-.tl-light.a { flex-direction: row; left: 100px; top: 100px; }       /* governs Road A (horizontal) */
-.tl-light.b { flex-direction: column; right: 100px; bottom: 100px; } /* governs Road B (vertical) */
+.tl-light.a { flex-direction: row; left: 90px; bottom: 160px; }       /* governs Road A (horizontal) */
+.tl-light.b { flex-direction: column; left: 160px; top: 90px; } /* governs Road B (vertical) */
 
 .tl-bulb {
     width: 16px; height: 16px; border-radius: 50%;
