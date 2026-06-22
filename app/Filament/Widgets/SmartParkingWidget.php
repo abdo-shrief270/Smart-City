@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\ParkingReservation;
-use App\Models\ParkingSlot;
+use App\Services\FirebaseService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Auth;
@@ -21,9 +21,11 @@ class SmartParkingWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $totalSlots = ParkingSlot::count();
-        $availableSlots = ParkingSlot::where('status', 'available')->count();
-        $occupiedSlots = $totalSlots - $availableSlots;
+        // Live aggregate counts from the IoT parking sensor.
+        $sensor = app(FirebaseService::class)->get('SmartParking') ?? [];
+        $availableSlots = (int) ($sensor['FreeSlots'] ?? 0);
+        $occupiedSlots = (int) ($sensor['OccupiedSlots'] ?? 0);
+        $totalSlots = $availableSlots + $occupiedSlots;
 
         $stats = [
             Stat::make('🅿️ Total Slots', $totalSlots)

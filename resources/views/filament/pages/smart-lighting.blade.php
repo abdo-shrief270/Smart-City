@@ -1,52 +1,48 @@
 <x-filament-panels::page>
-<div wire:poll.2s="refreshData" class="sl-container">
+<div wire:poll.15s="refreshData" x-data="fbWatch('SmartLighting', 'refreshData')" class="sl-container">
 
     @php
-        $byRoad = [
-            'N' => [$lights[0] ?? false, $lights[1] ?? false],
-            'E' => [$lights[2] ?? false, $lights[3] ?? false],
-            'S' => [$lights[4] ?? false, $lights[5] ?? false],
-            'W' => [$lights[6] ?? false, $lights[7] ?? false],
-        ];
-        $roadCount = fn ($pair) => array_sum(array_map(fn ($v) => $v ? 1 : 0, $pair));
+        // Single lamp value drives the whole scene; LDR is the ambient reading.
+        $on = $lamp;
+        $ldrPct = max(0, min(100, round($ldr / 4095 * 100)));
     @endphp
 
-    {{-- Crossroad + road status cards (cards positioned around the scene, one per direction) --}}
+    {{-- Crossroad + road status cards (one per direction, all share the single state) --}}
     <div class="sl-arena">
         @foreach(['N','E','S','W'] as $road)
-            @php $onCount = $roadCount($byRoad[$road]); @endphp
             <div class="sl-road-card sl-card-{{ strtolower($road) }}">
                 <div class="sl-road-title">Road {{ $road }}</div>
-                <div class="sl-road-count {{ $onCount === 2 ? 'full' : ($onCount === 1 ? 'half' : 'empty') }}">
-                    {{ $onCount }} / 2 on
+                <div class="sl-road-count {{ $on ? 'full' : 'empty' }}">
+                    {{ $on ? 'ON' : 'OFF' }}
                 </div>
             </div>
         @endforeach
 
         {{-- Crossroad scene --}}
         <div class="sl-scene">
-        {{-- HUD: mode toggle (top-left) + live count (top-right) --}}
+
+        {{-- HUD: LDR reading (top-left) + lamp toggle (top-right) --}}
+        <div class="sl-hud sl-hud-ldr">
+            <x-heroicon-s-sun class="sl-hud-sun" />
+            <strong>{{ number_format($ldr) }}</strong>
+            <span class="sl-hud-hint">LDR · {{ $ldrPct }}%</span>
+        </div>
+
         <button
             type="button"
-            wire:click="toggleMode"
-            wire:target="toggleMode"
+            wire:click="toggleLamp"
+            wire:target="toggleLamp"
             wire:loading.attr="disabled"
-            class="sl-hud sl-hud-mode sl-{{ $mode }}"
-            title="Switch to {{ $mode === 'manual' ? 'Auto' : 'Manual' }} mode"
+            class="sl-hud sl-hud-lamp {{ $on ? 'on' : 'off' }}"
+            title="{{ $on ? 'Turn lamp off' : 'Turn lamp on' }}"
         >
             <span class="sl-hud-dot"></span>
-            <span wire:loading.remove wire:target="toggleMode">
-                <strong>{{ strtoupper($mode) }}</strong>
-                <span class="sl-hud-hint">→ {{ $mode === 'manual' ? 'Auto' : 'Manual' }}</span>
+            <span wire:loading.remove wire:target="toggleLamp">
+                <strong>{{ $on ? 'ON' : 'OFF' }}</strong>
+                <span class="sl-hud-hint">tap to {{ $on ? 'turn off' : 'turn on' }}</span>
             </span>
-            <span wire:loading wire:target="toggleMode">Switching…</span>
+            <span wire:loading wire:target="toggleLamp">Switching…</span>
         </button>
-
-        <div class="sl-hud sl-hud-count">
-            <span class="sl-dot on"></span>
-            <strong>{{ collect($lights)->filter()->count() }} / 8</strong>
-            <span class="sl-hud-hint">ON</span>
-        </div>
 
         {{-- Ground --}}
         <div class="sl-ground"></div>
@@ -66,33 +62,32 @@
         <div class="sl-compass sl-compass-w">WEST</div>
 
         @php
-            // 8 lamps, two per road section. Indexes match the $lights array.
+            // 8 lamps, two per road section. All reflect the single Lamp value.
             $lamps = [
-                0 => ['pos' => 'n-west',  'label' => 'N-1', 'road' => 'N'],
-                1 => ['pos' => 'n-east',  'label' => 'N-2', 'road' => 'N'],
-                2 => ['pos' => 'e-north', 'label' => 'E-1', 'road' => 'E'],
-                3 => ['pos' => 'e-south', 'label' => 'E-2', 'road' => 'E'],
-                4 => ['pos' => 's-east',  'label' => 'S-1', 'road' => 'S'],
-                5 => ['pos' => 's-west',  'label' => 'S-2', 'road' => 'S'],
-                6 => ['pos' => 'w-south', 'label' => 'W-1', 'road' => 'W'],
-                7 => ['pos' => 'w-north', 'label' => 'W-2', 'road' => 'W'],
+                ['pos' => 'n-west',  'label' => 'N-1', 'road' => 'N'],
+                ['pos' => 'n-east',  'label' => 'N-2', 'road' => 'N'],
+                ['pos' => 'e-north', 'label' => 'E-1', 'road' => 'E'],
+                ['pos' => 'e-south', 'label' => 'E-2', 'road' => 'E'],
+                ['pos' => 's-east',  'label' => 'S-1', 'road' => 'S'],
+                ['pos' => 's-west',  'label' => 'S-2', 'road' => 'S'],
+                ['pos' => 'w-south', 'label' => 'W-1', 'road' => 'W'],
+                ['pos' => 'w-north', 'label' => 'W-2', 'road' => 'W'],
             ];
         @endphp
 
-        @foreach($lamps as $index => $lamp)
-            @php $isOn = $lights[$index] ?? false; @endphp
-            <div class="sl-lamp sl-pos-{{ $lamp['pos'] }}">
+        @foreach($lamps as $meta)
+            <div class="sl-lamp sl-pos-{{ $meta['pos'] }}">
                 <button
-                    wire:click="toggleLight({{ $index }})"
-                    class="sl-bulb {{ $isOn ? 'on' : 'off' }} {{ $mode === 'auto' ? 'disabled' : '' }}"
-                    title="Light {{ $lamp['label'] }} (Road {{ $lamp['road'] }})"
-                    wire:target="toggleLight({{ $index }})"
+                    wire:click="toggleLamp"
+                    class="sl-bulb {{ $on ? 'on' : 'off' }}"
+                    title="Street Lamp {{ $meta['label'] }} (Road {{ $meta['road'] }})"
+                    wire:target="toggleLamp"
                     wire:loading.attr="disabled"
                 >
                     <x-heroicon-s-light-bulb class="sl-bulb-icon" />
-                    <span class="sl-bulb-label">{{ $lamp['label'] }}</span>
+                    <span class="sl-bulb-label">{{ $meta['label'] }}</span>
                 </button>
-                @if($isOn)
+                @if($on)
                     <div class="sl-glow"></div>
                 @endif
             </div>
@@ -134,22 +129,23 @@
 .sl-hud-hint { color: #6b7280; font-size: 0.65rem; font-weight: 600; margin-left: 0.15rem; }
 .dark .sl-hud-hint { color: #a1a1aa; }
 
-/* Mode pill (button, top-left) */
-.sl-hud-mode {
-    top: 0.65rem; left: 0.65rem;
+/* LDR pill (top-left) */
+.sl-hud-ldr { top: 0.65rem; left: 0.65rem; color: #b45309; }
+.dark .sl-hud-ldr { color: #fbbf24; }
+.sl-hud-sun { width: 0.95rem; height: 0.95rem; flex: 0 0 auto; }
+
+/* Lamp toggle pill (button, top-right) */
+.sl-hud-lamp {
+    top: 0.65rem; right: 0.65rem;
     cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
 }
-.sl-hud-mode:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
-.sl-hud-mode:disabled { cursor: not-allowed; opacity: 0.7; }
-.sl-hud-mode.sl-manual { color: #2563eb; }
-.sl-hud-mode.sl-auto   { color: #059669; }
+.sl-hud-lamp:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
+.sl-hud-lamp:disabled { cursor: not-allowed; opacity: 0.7; }
+.sl-hud-lamp.on  { color: #b45309; }
+.sl-hud-lamp.off { color: #6b7280; }
 .sl-hud-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: 0 0 auto; }
-.sl-hud-mode.sl-manual .sl-hud-dot { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.7); }
-.sl-hud-mode.sl-auto   .sl-hud-dot { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.7); }
-
-/* Count pill (top-right) */
-.sl-hud-count { top: 0.65rem; right: 0.65rem; }
-.sl-dot { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #facc15; box-shadow: 0 0 8px rgba(250,204,21,0.7); flex: 0 0 auto; }
+.sl-hud-lamp.on  .sl-hud-dot { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,0.8); }
+.sl-hud-lamp.off .sl-hud-dot { background: #9ca3af; }
 
 /* ================== CROSSROAD SCENE ================== */
 .sl-scene {
@@ -247,8 +243,8 @@
     0%,100% { box-shadow: 0 0 20px 6px rgba(251,191,36,0.55), 0 4px 10px rgba(0,0,0,0.2); }
     50%     { box-shadow: 0 0 32px 12px rgba(251,191,36,0.8), 0 4px 10px rgba(0,0,0,0.2); }
 }
-.sl-bulb:hover:not(.disabled) { transform: scale(1.08); }
-.sl-bulb.disabled { cursor: not-allowed; opacity: 0.65; }
+.sl-bulb:hover:not(:disabled) { transform: scale(1.08); }
+.sl-bulb:disabled { cursor: not-allowed; opacity: 0.85; }
 .sl-bulb-icon { width: 1.4rem; height: 1.4rem; }
 .sl-bulb-label { font-size: 0.7rem; font-weight: 800; margin-top: -1px; letter-spacing: 0.05em; }
 
@@ -326,7 +322,6 @@
 .sl-road-title { font-size: 0.7rem; font-weight: 800; color: #6b7280; letter-spacing: 0.15em; }
 .sl-road-count { margin-top: 0.25rem; font-weight: 800; font-size: 0.95rem; }
 .sl-road-count.full  { color: #f59e0b; }
-.sl-road-count.half  { color: #3b82f6; }
 .sl-road-count.empty { color: #9ca3af; }
 
 /* On narrow screens, drop the cards into a 2×2 pack below the scene */
@@ -351,7 +346,6 @@
     .sl-bulb-label { font-size: 0.55rem; }
     .sl-glow { width: 6rem; height: 6rem; }
     .sl-compass { font-size: 0.6rem; }
-    .sl-road-summary { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </x-filament-panels::page>

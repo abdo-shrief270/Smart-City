@@ -23,14 +23,13 @@ class IoTSensorChart extends ChartWidget
     {
         $firebaseService = app(FirebaseService::class);
 
-        // Get current sensor data
-        $farmData = $firebaseService->get('smart_farm');
-        $tankData = $firebaseService->get('smart-tank') ?? [];
+        // Get current sensor data (new schema)
+        $farmData = $firebaseService->get('SmartFarm') ?? [];
+        $tankData = $firebaseService->get('SmartTank') ?? [];
 
-        $sensors = $farmData['sensors'] ?? $farmData ?? [];
-        $temp = $sensors['temperature'] ?? $sensors['temp'] ?? 25;
-        $humidity = $sensors['humidity'] ?? 60;
-        $waterLevel = $tankData['level'] ?? 50;
+        $temp = (int) ($farmData['Temp'] ?? 25);
+        $soil = (int) ($farmData['Soil'] ?? 60);
+        $waterLevel = (int) ($tankData['Level'] ?? 50);
 
         // Simulate historical data for visualization (in real app, fetch from DB)
         $hours = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Now'];
@@ -38,7 +37,7 @@ class IoTSensorChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Temperature (°C)',
+                    'label' => 'Temperature',
                     'data' => [22, 21, 23, 28, 32, 30, $temp],
                     'borderColor' => '#ef4444',
                     'backgroundColor' => 'rgba(239, 68, 68, 0.1)',
@@ -46,8 +45,8 @@ class IoTSensorChart extends ChartWidget
                     'tension' => 0.4,
                 ],
                 [
-                    'label' => 'Humidity (%)',
-                    'data' => [65, 70, 68, 55, 50, 58, $humidity],
+                    'label' => 'Soil Moisture',
+                    'data' => [65, 70, 68, 55, 50, 58, $soil],
                     'borderColor' => '#3b82f6',
                     'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
                     'fill' => true,
@@ -77,7 +76,6 @@ class IoTSensorChart extends ChartWidget
             'scales' => [
                 'y' => [
                     'beginAtZero' => true,
-                    'max' => 100,
                 ],
             ],
             'plugins' => [

@@ -67,6 +67,10 @@ class AdminPanelProvider extends PanelProvider
                 fn (): View => view('filament.navbar.floating-logo'),
             )
             ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): View => view('filament.partials.firebase-realtime'),
+            )
+            ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): View => view('filament.navbar.hide-expand-sidebar'),
             )

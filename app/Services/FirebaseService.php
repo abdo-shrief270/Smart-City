@@ -3,42 +3,75 @@
 namespace App\Services;
 
 use App\Settings\FirebaseSettings;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class FirebaseService
 {
     protected FirebaseSettings $settings;
 
+    /**
+     * How long a cached node stays valid. The background SyncFirebaseData job
+     * refreshes every second, so this only needs to outlive a few skipped
+     * cycles — long enough that page polls (every 2–3s) always hit warm cache.
+     */
+    protected const CACHE_TTL = 10;
+
     public function __construct(FirebaseSettings $settings)
     {
         $this->settings = $settings;
     }
 
+    protected function cacheKey(string $path): string
+    {
+        return 'firebase:' . trim($path, '/');
+    }
+
     /**
-     * Get data from Firebase Realtime Database
-     * 
-     * @param string $path Path to the data node
+     * Get data from Firebase Realtime Database.
+     *
+     * Reads are served from cache so they never block a web request on a
+     * Firebase round-trip. The cache is kept fresh by the background sync job
+     * (which calls this with $fresh = true). On a cache miss we fetch once and
+     * cache the result; on a network error we fall back to the last good value.
+     *
+     * @param string $path  Path to the data node
+     * @param bool   $fresh Force a live fetch (used by the background warmer)
      * @return mixed
      */
-    public function get(string $path)
+    public function get(string $path, bool $fresh = false)
     {
         if (empty($this->settings->database_url)) {
             return null;
         }
 
+        $cacheKey = $this->cacheKey($path);
+
+        if (! $fresh) {
+            $cached = Cache::get($cacheKey);
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
         $url = rtrim($this->settings->database_url, '/') . '/' . ltrim($path, '/') . '.json';
 
-        // Append auth param if needed, but usually for read-only public data or 
+        // Append auth param if needed, but usually for read-only public data or
         // using a service account is better. For simplicity with API Key:
         if (!empty($this->settings->api_key)) {
             $url .= '?auth=' . $this->settings->api_key; // Note: This might need proper Auth token exchange
         }
 
         try {
-            $response = Http::get($url);
-            return $response->json();
+            // Fail fast: a slow/unreachable Firebase must not hang the request.
+            $response = Http::connectTimeout(2)->timeout(4)->get($url);
+            $data = $response->json();
+            Cache::put($cacheKey, $data, self::CACHE_TTL);
+
+            return $data;
         } catch (\Exception $e) {
-            return null;
+            // Serve the last known value rather than nothing.
+            return Cache::get($cacheKey);
         }
     }
     /**
@@ -61,7 +94,18 @@ class FirebaseService
         }
 
         try {
-            $response = Http::withBody(json_encode($value), 'application/json')->put($url);
+            $response = Http::connectTimeout(2)->timeout(4)
+                ->withBody(json_encode($value), 'application/json')
+                ->put($url);
+
+            if ($response->successful()) {
+                // Invalidate the written path and its root node so the next read
+                // reflects the change instead of serving a stale cached value.
+                Cache::forget($this->cacheKey($path));
+                $root = explode('/', trim($path, '/'))[0];
+                Cache::forget($this->cacheKey($root));
+            }
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;
@@ -137,118 +181,52 @@ class FirebaseService
             // Non-fatal: continue with other sync jobs even if gate-logs fails.
         }
 
-        // 1. Smart Tank Sync
-        $tankData = $this->get('smart-tank');
-        if ($tankData) {
-            $level = (int) ($tankData['level'] ?? 0);
+        // Warm the cache with one fresh read per live node. Pages and widgets
+        // then read these from cache instead of each making their own blocking
+        // Firebase HTTP call inside a web request.
+        $nodes = [
+            'SmartTank', 'SmartFarm', 'SmartLighting',
+            'SmartParking', 'SmartTraffic', 'SmartEmergency',
+        ];
+        $live = [];
+        foreach ($nodes as $node) {
+            $live[$node] = $this->get($node, fresh: true);
+        }
 
-            // Calculate status if missing or arbitrary
-            $status = $tankData['status'] ?? null;
-            if (!$status || $status === 'Unknown') {
-                if ($level < 20)
-                    $status = 'Low';
-                elseif ($level > 80)
-                    $status = 'Critical';
-                else
-                    $status = 'Normal';
+        // 1. Smart Tank Sync  (schema: SmartTank/Level, SmartTank/Pump)
+        $tankData = $live['SmartTank'];
+        if (is_array($tankData)) {
+            $level = (int) ($tankData['Level'] ?? 0);
+
+            // Status is derived locally — the device only reports the raw level.
+            if ($level < 20) {
+                $status = 'Low';
+            } elseif ($level > 80) {
+                $status = 'Critical';
+            } else {
+                $status = 'Normal';
             }
 
             \App\Models\SmartTankData::create([
                 'level' => $level,
                 'status' => $status,
-                'is_pump_on' => (bool) ($tankData['isPumpOn'] ?? false),
+                'is_pump_on' => (bool) ($tankData['Pump'] ?? 0),
             ]);
         }
 
-        // 2. Smart Farm Sync
-        $farmData = $this->get('smart_farm');
-        if ($farmData) {
-            // Handle nested 'sensors' structure if present
-            $sensors = $farmData['sensors'] ?? $farmData;
-
+        // 2. Smart Farm Sync  (schema: SmartFarm/Temp, Soil, Rain, Pump)
+        // Soil moisture is stored in the existing `humidity` column.
+        $farmData = $live['SmartFarm'];
+        if (is_array($farmData)) {
             \App\Models\SmartFarmData::create([
-                'temp' => (int) ($sensors['temperature'] ?? $sensors['temp'] ?? 0),
-                'humidity' => (int) ($sensors['humidity'] ?? 0),
-                'is_pump_on' => (bool) ($sensors['pump'] ?? $sensors['isPumpOn'] ?? false),
+                'temp' => (int) ($farmData['Temp'] ?? 0),
+                'humidity' => (int) ($farmData['Soil'] ?? 0),
+                'is_pump_on' => (bool) ($farmData['Pump'] ?? 0),
             ]);
         }
 
-        // 3. Smart Parking Sync - Read from Firebase IoT sensors
-        $parkingData = $this->get('smart-parking');
-        if ($parkingData && is_array($parkingData)) {
-            foreach ($parkingData as $slotKey => $slotData) {
-                // Skip if not valid slot data
-                if (!is_array($slotData))
-                    continue;
-
-                // Parse slot key (e.g., "A-1" or "slot_A_1")
-                $slotIdentifier = str_replace(['slot_', '_'], ['', '-'], $slotKey);
-                $parts = explode('-', $slotIdentifier);
-
-                if (count($parts) >= 2) {
-                    $area = strtoupper($parts[0]);
-                    $slotNumber = (int) $parts[1];
-
-                    // Find matching slot in DB
-                    $slot = \App\Models\ParkingSlot::where('area', $area)
-                        ->where('slot_number', $slotNumber)
-                        ->first();
-
-                    if ($slot) {
-                        // IoT sensor reports occupied (car detected) or available
-                        $sensorOccupied = (bool) ($slotData['occupied'] ?? $slotData['isOccupied'] ?? false);
-
-                        // Only update if no active reservation (sensor-driven status)
-                        if (!$slot->activeReservation) {
-                            $newStatus = $sensorOccupied ? 'occupied' : 'available';
-                            if ($slot->status !== $newStatus) {
-                                $slot->update(['status' => $newStatus]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Sync parking slot status to Firebase (for IoT display)
-     */
-    public function syncParkingToFirebase(): void
-    {
-        $slots = \App\Models\ParkingSlot::with('activeReservation')->get();
-
-        $parkingData = [];
-        foreach ($slots as $slot) {
-            $key = $slot->area . '-' . $slot->slot_number;
-            $parkingData[$key] = [
-                'area' => $slot->area,
-                'slot_number' => $slot->slot_number,
-                'status' => $slot->status,
-                'occupied' => $slot->status !== 'available',
-                'has_reservation' => $slot->activeReservation !== null,
-                'cost_per_hour' => $slot->cost_per_hour,
-                'updated_at' => now()->toIso8601String(),
-            ];
-        }
-
-        $this->set('smart-parking', $parkingData);
-    }
-
-    /**
-     * Update single slot status in Firebase
-     */
-    public function updateSlotInFirebase(\App\Models\ParkingSlot $slot): bool
-    {
-        $key = $slot->area . '-' . $slot->slot_number;
-        return $this->set("smart-parking/{$key}", [
-            'area' => $slot->area,
-            'slot_number' => $slot->slot_number,
-            'status' => $slot->status,
-            'occupied' => $slot->status !== 'available',
-            'has_reservation' => $slot->activeReservation !== null,
-            'cost_per_hour' => $slot->cost_per_hour,
-            'updated_at' => now()->toIso8601String(),
-        ]);
+        // Smart Parking is now reported by the IoT device as aggregate counts
+        // (SmartParking/FreeSlots, SmartParking/OccupiedSlots) and is read live
+        // on the page — there is no per-slot data to sync into the DB anymore.
     }
 }

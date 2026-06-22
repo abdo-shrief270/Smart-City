@@ -44,6 +44,11 @@ class SmartParking extends Page implements HasActions
     public int $occupiedSlots = 0;
     public float $totalRevenue = 0.0;
 
+    // Live aggregate counts reported by the IoT parking sensor
+    // (schema: SmartParking/FreeSlots, SmartParking/OccupiedSlots).
+    public int $liveFreeSlots = 0;
+    public int $liveOccupiedSlots = 0;
+
     public function mount(): void
     {
         $this->refreshSlots();
@@ -51,36 +56,11 @@ class SmartParking extends Page implements HasActions
 
     public function refreshSlots(): void
     {
-        // Sync from Firebase first (read IoT sensor data)
-        $firebase = app(FirebaseService::class);
-        $parkingData = $firebase->get('smart-parking');
-
-        if ($parkingData && is_array($parkingData)) {
-            foreach ($parkingData as $slotKey => $slotData) {
-                if (!is_array($slotData))
-                    continue;
-
-                // Parse slot key (e.g., "A-1")
-                $parts = explode('-', $slotKey);
-                if (count($parts) >= 2) {
-                    $area = strtoupper($parts[0]);
-                    $slotNumber = (int) $parts[1];
-
-                    $slot = ParkingSlot::where('area', $area)
-                        ->where('slot_number', $slotNumber)
-                        ->first();
-
-                    if ($slot && !$slot->activeReservation) {
-                        // Update status from IoT sensor
-                        $sensorOccupied = (bool) ($slotData['occupied'] ?? false);
-                        $newStatus = $sensorOccupied ? 'occupied' : 'available';
-
-                        if ($slot->status !== $newStatus) {
-                            $slot->update(['status' => $newStatus]);
-                        }
-                    }
-                }
-            }
+        // Read live sensor counts from Firebase.
+        $sensor = app(FirebaseService::class)->get('SmartParking', fresh: true);
+        if (is_array($sensor)) {
+            $this->liveFreeSlots = (int) ($sensor['FreeSlots'] ?? 0);
+            $this->liveOccupiedSlots = (int) ($sensor['OccupiedSlots'] ?? 0);
         }
 
         $allSlots = ParkingSlot::with('activeReservation.user')->get();
@@ -136,9 +116,6 @@ class SmartParking extends Page implements HasActions
                     'status' => 'active',
                 ]);
 
-                // Sync to Firebase
-                app(FirebaseService::class)->updateSlotInFirebase($slot->fresh('activeReservation'));
-
                 Notification::make()->title('Slot Reserved Successfully')->success()->send();
                 $this->refreshSlots();
             });
@@ -192,9 +169,6 @@ class SmartParking extends Page implements HasActions
                 $user->save();
 
                 $slot->update(['status' => 'available']);
-
-                // Sync to Firebase
-                app(FirebaseService::class)->updateSlotInFirebase($slot->fresh());
 
                 Notification::make()
                     ->title('Parking Ended')

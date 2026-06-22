@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div wire:poll.5s="fetchData" class="farm-grid">
+    <div wire:poll.15s="fetchData" x-data="fbWatch('SmartFarm', 'fetchData')" class="farm-grid">
         {{-- Temperature Card --}}
         <div class="farm-card">
             <div class="icon-bubble orange">
@@ -9,14 +9,14 @@
             </div>
             <div class="card-content">
                 <h3 class="card-label">Temperature</h3>
-                <p class="card-value">{{ $temp }}°C</p>
+                <p class="card-value">{{ $temp }}</p>
             </div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill orange" style="width: {{ min($temp, 100) }}%"></div>
+                <div class="progress-bar-fill orange" style="width: {{ min(round($temp / 4095 * 100), 100) }}%"></div>
             </div>
         </div>
 
-        {{-- Humidity Card --}}
+        {{-- Soil Moisture Card --}}
         <div class="farm-card">
             <div class="icon-bubble blue">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12">
@@ -24,11 +24,30 @@
                 </svg>
             </div>
             <div class="card-content">
-                <h3 class="card-label">Humidity</h3>
-                <p class="card-value">{{ $humidity }}%</p>
+                <h3 class="card-label">Soil Moisture</h3>
+                <p class="card-value">{{ $soil }}</p>
             </div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill blue" style="width: {{ min($humidity, 100) }}%"></div>
+                <div class="progress-bar-fill blue" style="width: {{ min(round($soil / 4095 * 100), 100) }}%"></div>
+            </div>
+        </div>
+
+        {{-- Rain Card --}}
+        <div class="farm-card">
+            <div class="icon-bubble {{ $rain ? 'blue' : 'gray' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 19.5 7 22m5-2.5L11 22m5-2.5L15 22" />
+                </svg>
+            </div>
+            <div class="card-content">
+                <h3 class="card-label">Rain</h3>
+                <p class="card-value {{ $rain ? '' : 'text-gray' }}">{{ $rain ? 'Raining' : 'Dry' }}</p>
+            </div>
+            <div class="action-badge-wrapper">
+                <span class="action-badge {{ $rain ? 'green' : 'gray' }}">
+                    {{ $rain ? 'Moisture incoming' : 'No rain detected' }}
+                </span>
             </div>
         </div>
 
@@ -60,9 +79,15 @@
             gap: 1.5rem;
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 640px) {
             .farm-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .farm-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
 

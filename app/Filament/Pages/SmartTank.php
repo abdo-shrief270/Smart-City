@@ -41,17 +41,26 @@ class SmartTank extends Page
 
     public function fetchData(): void
     {
-        // Fetch data from local DB (synced via Job)
-        $data = SmartTankData::latest()->first();
+        // Current values come live from Firebase so changes show in real time.
+        $live = app(FirebaseService::class)->get('SmartTank', fresh: true);
 
-        if ($data) {
-            $this->level = $data->level;
-            $this->status = $data->status;
-            $this->isPumpOn = $data->is_pump_on;
+        if (is_array($live)) {
+            $this->level = (int) ($live['Level'] ?? 0);
+            $this->isPumpOn = (bool) ($live['Pump'] ?? 0);
+            $this->status = $this->level < 20
+                ? 'Low'
+                : ($this->level > 80 ? 'Critical' : 'Normal');
         } else {
-            // Fallback if DB is empty (e.g. before first sync)
-            $this->level = 0;
-            $this->status = 'Waiting for Sync...';
+            // Fallback to the last synced DB row if Firebase is unreachable.
+            $data = SmartTankData::latest()->first();
+            if ($data) {
+                $this->level = $data->level;
+                $this->status = $data->status;
+                $this->isPumpOn = $data->is_pump_on;
+            } else {
+                $this->level = 0;
+                $this->status = 'Waiting for Sync...';
+            }
         }
 
         // Fetch history data for the chart from DB
@@ -72,15 +81,9 @@ class SmartTank extends Page
     {
         $this->isPumpOn = !$this->isPumpOn;
 
-        // Optimistic update to Firebase
-        // The SyncJob will eventually pull this back to DB
-        // But for now, we just update the UI state
-        // In a real app, you would inject FirebaseService here and call:
-        // $firebase->set('smart-tank/isPumpOn', $this->isPumpOn);
-
-        // Simulating the Firebase call for this demo context where we might not have the service injected in this method signature easily without DI resolution adjustment or using app()
+        // Write the pump state back to the device (0/1 to match the schema).
         $firebase = app(FirebaseService::class);
-        $firebase->set('smart-tank/isPumpOn', $this->isPumpOn);
+        $firebase->set('SmartTank/Pump', $this->isPumpOn ? 1 : 0);
 
         Notification::make()
             ->title($this->isPumpOn ? 'Pump Activated' : 'Pump Deactivated')

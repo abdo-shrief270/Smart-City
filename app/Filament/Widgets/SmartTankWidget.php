@@ -21,10 +21,10 @@ class SmartTankWidget extends BaseWidget
     protected function getStats(): array
     {
         $firebaseService = app(FirebaseService::class);
-        $tankData = $firebaseService->get('smart-tank') ?? [];
+        $tankData = $firebaseService->get('SmartTank') ?? [];
 
-        $level = $tankData['level'] ?? 0;
-        $pump = $tankData['isPumpOn'] ?? $tankData['pump'] ?? false;
+        $level = (int) ($tankData['Level'] ?? 0);
+        $pump = (bool) ($tankData['Pump'] ?? 0);
 
         // Determine status based on level
         $status = match (true) {

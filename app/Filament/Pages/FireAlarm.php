@@ -20,7 +20,7 @@ class FireAlarm extends Page
 
     public static function getNavigationLabel(): string
     {
-        return 'Fire Alarm';
+        return 'Smart Emergency';
     }
 
     public static function getNavigationSort(): ?int
@@ -28,66 +28,50 @@ class FireAlarm extends Page
         return 6;
     }
 
-    // Sensor data
-    public int|float $flameValue = 0;     // raw ADC value from sensor (0-4095)
-    public bool $fireDetected = false;    // true = fire detected
-    public bool $pumpActive = false;      // true = pump is running
-    public int|float $gasValue = 0;       // raw ADC value from gas sensor (0-4095)
-    public bool $gasDetected = false;     // true = gas leak detected
-    public int $gasThreshold = 2000;      // alarm threshold for gas sensor
+    // Sensor states (schema: SmartEmergency/Fire, Smoke, Alarm)
+    public bool $fire = false;   // flame detected
+    public bool $smoke = false;  // smoke / gas detected
+    public bool $alarm = false;  // alarm (buzzer / siren) active
 
     public function mount(): void
     {
-        $firebase = app(FirebaseService::class);
-        $data = $firebase->get('fire-alarm');
-
-        $this->pumpActive = (bool) ($data['pumpActive'] ?? false);
-
         $this->pollData();
     }
 
     public function pollData(): void
     {
-        $firebase = app(FirebaseService::class);
-        $data = $firebase->get('fire-alarm');
+        $data = app(FirebaseService::class)->get('SmartEmergency', fresh: true);
 
-        if (!$data) {
+        if (! is_array($data)) {
             return;
         }
 
-        $this->flameValue   = (int) ($data['flameValue']   ?? 0);
-        $this->fireDetected = (bool) ($data['fireDetected'] ?? false);
-        $this->gasValue     = (int) ($data['gasValue']     ?? 0);
-        $this->gasDetected  = array_key_exists('gasDetected', $data ?? [])
-            ? (bool) $data['gasDetected']
-            : $this->gasValue >= $this->gasThreshold;
-
-        // Note: pumpActive is intentionally NOT synced from polling.
-        // The admin button is the source of truth — polling used to race
-        // with toggle writes and flip the UI back. Sensor values still refresh.
+        $this->fire  = (bool) ($data['Fire'] ?? 0);
+        $this->smoke = (bool) ($data['Smoke'] ?? 0);
+        $this->alarm = (bool) ($data['Alarm'] ?? 0);
     }
 
-    public function togglePump(): void
+    public function toggleAlarm(): void
     {
         $firebase = app(FirebaseService::class);
-        $target = ! $this->pumpActive;
+        $target = ! $this->alarm;
 
-        $ok = $firebase->set('fire-alarm/pumpActive', $target);
+        $ok = $firebase->set('SmartEmergency/Alarm', $target ? 1 : 0);
 
         if (! $ok) {
             Notification::make()
-                ->title('Failed to update pump')
+                ->title('Failed to update alarm')
                 ->body('Could not write to Firebase. Check database URL, rules, and API key in Firebase settings.')
                 ->danger()
                 ->send();
             return;
         }
 
-        $this->pumpActive = $target;
+        $this->alarm = $target;
 
         Notification::make()
-            ->title('Pump ' . ($this->pumpActive ? 'Activated' : 'Deactivated'))
-            ->color($this->pumpActive ? 'success' : 'warning')
+            ->title($this->alarm ? 'Alarm Activated' : 'Alarm Silenced')
+            ->color($this->alarm ? 'danger' : 'success')
             ->send();
     }
 }

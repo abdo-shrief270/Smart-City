@@ -34,28 +34,24 @@ class SystemAlertsWidget extends BaseWidget
         $user = Auth::user();
 
         if ($user->can('view_fire_alarm')) {
-            $fire = $firebase->get('fire-alarm') ?? [];
+            $emergency = $firebase->get('SmartEmergency') ?? [];
 
-            $fireDetected = (bool) ($fire['fireDetected'] ?? false);
+            $fireDetected = (bool) ($emergency['Fire'] ?? 0);
             $stats[] = Stat::make('Fire Status', $fireDetected ? 'FIRE DETECTED' : 'All Clear')
                 ->description($fireDetected ? 'Take action immediately' : 'Sensors nominal')
                 ->descriptionIcon($fireDetected ? 'heroicon-m-fire' : 'heroicon-m-shield-check')
                 ->color($fireDetected ? 'danger' : 'success');
 
-            $gasValue = (int) ($fire['gasValue'] ?? 0);
-            $gasDetected = array_key_exists('gasDetected', $fire)
-                ? (bool) $fire['gasDetected']
-                : $gasValue >= 2000;
-
-            $stats[] = Stat::make('Gas Sensor', number_format($gasValue) . ' / 4095')
-                ->description($gasDetected ? 'Leak detected' : 'Within safe range')
-                ->descriptionIcon($gasDetected ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
-                ->color($gasDetected ? 'danger' : 'success');
+            $smokeDetected = (bool) ($emergency['Smoke'] ?? 0);
+            $stats[] = Stat::make('Smoke / Gas', $smokeDetected ? 'Detected' : 'Clear')
+                ->description($smokeDetected ? 'Leak detected' : 'Within safe range')
+                ->descriptionIcon($smokeDetected ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
+                ->color($smokeDetected ? 'danger' : 'success');
         }
 
         if ($user->can('view_smart_tank')) {
-            $tank = $firebase->get('smart-tank') ?? [];
-            $level = (int) ($tank['level'] ?? 0);
+            $tank = $firebase->get('SmartTank') ?? [];
+            $level = (int) ($tank['Level'] ?? 0);
 
             $color = 'success';
             $note = 'Normal level';
@@ -74,16 +70,15 @@ class SystemAlertsWidget extends BaseWidget
         }
 
         if ($user->can('view_smart_farm')) {
-            $farm = $firebase->get('smart_farm') ?? [];
-            $sensors = $farm['sensors'] ?? $farm;
-            $temp = (int) ($sensors['temperature'] ?? $sensors['temp'] ?? 0);
-            $humidity = (int) ($sensors['humidity'] ?? 0);
+            $farm = $firebase->get('SmartFarm') ?? [];
+            $temp = (int) ($farm['Temp'] ?? 0);
+            $soil = (int) ($farm['Soil'] ?? 0);
+            $rain = (bool) ($farm['Rain'] ?? 0);
 
-            $tempColor = $temp >= 35 ? 'danger' : ($temp >= 30 ? 'warning' : 'success');
-            $stats[] = Stat::make('Farm Temperature', $temp . '°C')
-                ->description('Humidity: ' . $humidity . '%')
+            $stats[] = Stat::make('Farm Temperature', (string) $temp)
+                ->description('Soil: ' . $soil . ($rain ? ' · 🌧️ Rain' : ''))
                 ->descriptionIcon('heroicon-m-sun')
-                ->color($tempColor);
+                ->color('warning');
         }
 
         return $stats;

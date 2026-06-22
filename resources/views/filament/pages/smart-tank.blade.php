@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div wire:poll.3s="fetchData" class="tank-container">
+    <div wire:poll.15s="fetchData" x-data="fbWatch('SmartTank', 'fetchData')" class="tank-container">
 
         {{-- Header Stats --}}
         <div class="stats-grid">

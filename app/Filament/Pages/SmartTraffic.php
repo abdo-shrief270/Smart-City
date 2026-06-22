@@ -30,18 +30,14 @@ class SmartTraffic extends Page
         return 5;
     }
 
-    public const DIRECTIONS = ['north', 'south', 'east', 'west'];
-    public const COLORS = ['red', 'yellow', 'green'];
+    public const ROADS = ['A', 'B'];
 
-    public string $mode = 'manual';
+    /** Which road currently has the green light: 'A' or 'B'. */
+    public string $light = 'A';
 
-    /** Per-light state: 'north'|'south'|'east'|'west' => 'red'|'yellow'|'green' */
-    public array $lights = [
-        'north' => 'red',
-        'south' => 'red',
-        'east'  => 'red',
-        'west'  => 'red',
-    ];
+    /** Vehicle counts per road. */
+    public int $roadA = 0;
+    public int $roadB = 0;
 
     public function mount(): void
     {
@@ -50,49 +46,32 @@ class SmartTraffic extends Page
 
     public function pollData(): void
     {
-        $firebase = app(FirebaseService::class);
-        $data = $firebase->get('smart-traffic');
+        $data = app(FirebaseService::class)->get('SmartTraffic', fresh: true);
 
-        if (!$data) {
+        if (! is_array($data)) {
             return;
         }
 
-        $this->mode = $data['mode'] ?? 'manual';
-
-        $lightsData = $data['lights'] ?? [];
-        foreach (self::DIRECTIONS as $dir) {
-            $this->lights[$dir] = $lightsData[$dir] ?? 'red';
-        }
+        $light = strtoupper((string) ($data['Light'] ?? 'A'));
+        $this->light = in_array($light, self::ROADS, true) ? $light : 'A';
+        $this->roadA = (int) ($data['RoadA'] ?? 0);
+        $this->roadB = (int) ($data['RoadB'] ?? 0);
     }
 
-    public function toggleMode(): void
+    public function setActive(string $road): void
     {
-        $this->pollData();
-        $this->mode = $this->mode === 'manual' ? 'auto' : 'manual';
+        $road = strtoupper($road);
 
-        app(FirebaseService::class)->set('smart-traffic/mode', $this->mode);
+        if (! in_array($road, self::ROADS, true)) {
+            return;
+        }
+
+        app(FirebaseService::class)->set('SmartTraffic/Light', $road);
+        $this->light = $road;
 
         Notification::make()
-            ->title('Mode switched to ' . ucfirst($this->mode))
+            ->title("Green light given to Road {$road}")
             ->success()
             ->send();
-
-        $this->pollData();
-    }
-
-    public function setLight(string $dir, string $color): void
-    {
-        if ($this->mode === 'auto') {
-            Notification::make()->title('Cannot control lights manually in Auto mode')->warning()->send();
-            return;
-        }
-
-        if (!in_array($dir, self::DIRECTIONS, true) || !in_array($color, self::COLORS, true)) {
-            return;
-        }
-
-        $firebase = app(FirebaseService::class);
-        $firebase->set("smart-traffic/lights/{$dir}", $color);
-        $this->lights[$dir] = $color;
     }
 }

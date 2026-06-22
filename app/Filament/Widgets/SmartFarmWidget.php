@@ -21,23 +21,23 @@ class SmartFarmWidget extends BaseWidget
     protected function getStats(): array
     {
         $firebaseService = app(FirebaseService::class);
-        $farmData = $firebaseService->get('smart_farm');
-        $sensors = $farmData['sensors'] ?? $farmData ?? [];
+        $farmData = $firebaseService->get('SmartFarm') ?? [];
 
-        $temp = $sensors['temperature'] ?? $sensors['temp'] ?? 0;
-        $humidity = $sensors['humidity'] ?? 0;
-        $pump = $sensors['pump'] ?? $sensors['isPumpOn'] ?? false;
+        $temp = (int) ($farmData['Temp'] ?? 0);
+        $soil = (int) ($farmData['Soil'] ?? 0);
+        $rain = (bool) ($farmData['Rain'] ?? 0);
+        $pump = (bool) ($farmData['Pump'] ?? 0);
 
         return [
-            Stat::make('🌡️ Temperature', $temp . '°C')
-                ->description('Farm temperature')
-                ->color($temp > 35 ? 'danger' : ($temp > 25 ? 'warning' : 'success'))
+            Stat::make('🌡️ Temperature', (string) $temp)
+                ->description('Farm temperature sensor')
+                ->color('warning')
                 ->chart([20, 22, 24, 23, 25, 24, $temp]),
 
-            Stat::make('💧 Humidity', $humidity . '%')
-                ->description('Soil moisture')
-                ->color($humidity < 30 ? 'danger' : ($humidity < 50 ? 'warning' : 'success'))
-                ->chart([45, 50, 48, 52, 55, 53, $humidity]),
+            Stat::make('🌱 Soil Moisture', (string) $soil)
+                ->description($rain ? '🌧️ Rain detected' : 'No rain')
+                ->color($rain ? 'info' : 'success')
+                ->chart([45, 50, 48, 52, 55, 53, $soil]),
 
             Stat::make('⚡ Pump', $pump ? 'ON' : 'OFF')
                 ->description($pump ? 'Irrigation active' : 'System idle')

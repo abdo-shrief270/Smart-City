@@ -1,5 +1,24 @@
 <x-filament-panels::page>
-    <div wire:poll.1s="refreshSlots" class="smart-parking-container">
+    <div wire:poll.15s="refreshSlots" x-data="fbWatch('SmartParking', 'refreshSlots')" class="smart-parking-container">
+
+        {{-- Live IoT Sensor Banner (SmartParking/FreeSlots + OccupiedSlots) --}}
+        <div class="live-sensor-banner">
+            <div class="live-sensor-head">
+                <span class="live-dot"></span>
+                <span class="live-title">Live Sensor</span>
+            </div>
+            <div class="live-sensor-stats">
+                <div class="live-stat">
+                    <span class="live-stat-value free">{{ $liveFreeSlots }}</span>
+                    <span class="live-stat-label">Free</span>
+                </div>
+                <div class="live-divider"></div>
+                <div class="live-stat">
+                    <span class="live-stat-value occupied">{{ $liveOccupiedSlots }}</span>
+                    <span class="live-stat-label">Occupied</span>
+                </div>
+            </div>
+        </div>
 
         {{-- Stats Overview --}}
         <div class="stats-grid">
@@ -137,6 +156,80 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+        }
+
+        /* Live IoT Sensor Banner */
+        .live-sensor-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 0.9rem 1.5rem;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border-radius: 1rem;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .live-sensor-head {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #cbd5e1;
+        }
+
+        .live-dot {
+            width: 0.7rem;
+            height: 0.7rem;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: liveParkPulse 1.6s ease-out infinite;
+        }
+
+        @keyframes liveParkPulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .live-sensor-stats {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .live-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.1;
+        }
+
+        .live-stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+
+        .live-stat-value.free { color: #4ade80; }
+        .live-stat-value.occupied { color: #f87171; }
+
+        .live-stat-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+        }
+
+        .live-divider {
+            width: 1px;
+            height: 2.25rem;
+            background: rgba(255, 255, 255, 0.15);
         }
 
         /* Stats Grid */

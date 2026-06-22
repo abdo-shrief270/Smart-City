@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Services\FirebaseService;
-use App\Models\SmartFarmData;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
@@ -28,9 +27,10 @@ class SmartFarm extends Page
         return 2;
     }
 
-    public int $temp = 0;
-    public int $humidity = 0;
-    public bool $pump = false;
+    public int $temp = 0;     // raw temperature sensor reading
+    public int $soil = 0;     // raw soil-moisture sensor reading
+    public bool $rain = false; // rain detected
+    public bool $pump = false; // irrigation pump
 
     public function mount(): void
     {
@@ -39,18 +39,14 @@ class SmartFarm extends Page
 
     public function fetchData(): void
     {
-        // Fetch data from local DB
-        $data = SmartFarmData::latest()->first();
+        // Read live sensor values from Firebase (schema: SmartFarm/*)
+        $data = app(FirebaseService::class)->get('SmartFarm', fresh: true);
 
-        if ($data) {
-            $this->temp = $data->temp;
-            $this->humidity = $data->humidity;
-            $this->pump = $data->is_pump_on;
-        } else {
-            // Fallback
-            $this->temp = 0;
-            $this->humidity = 0;
-            $this->pump = false;
+        if (is_array($data)) {
+            $this->temp = (int) ($data['Temp'] ?? 0);
+            $this->soil = (int) ($data['Soil'] ?? 0);
+            $this->rain = (bool) ($data['Rain'] ?? 0);
+            $this->pump = (bool) ($data['Pump'] ?? 0);
         }
     }
 
@@ -61,9 +57,8 @@ class SmartFarm extends Page
         // Optimistic update
         $this->pump = $newStatus;
 
-        // Update Firebase
-        // Note: Writing to 'smart_farm/sensors/pump' to match structure
-        app(FirebaseService::class)->set('smart_farm/sensors/pump', $newStatus);
+        // Write pump state to the device (0/1 to match the schema).
+        app(FirebaseService::class)->set('SmartFarm/Pump', $newStatus ? 1 : 0);
 
         Notification::make()
             ->title('Pump ' . ($newStatus ? 'Started' : 'Stopped'))

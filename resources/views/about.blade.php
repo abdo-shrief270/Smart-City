@@ -10,18 +10,19 @@
     $projectTitle = 'Smart City Platform';
     $projectTagline = 'An integrated IoT system for modern urban management.';
 
-    $abstract = 'This project presents a unified Smart City platform that connects
-        multiple IoT subsystems — smart farming, parking, traffic, lighting, fire alarms,
-        and water-tank monitoring — into a single administration panel. Sensors publish
-        live data to Firebase, which the platform reads in real time, allowing operators
-        to supervise the city, intervene remotely, and collect analytics for continuous
-        improvement of urban services.';
-
-    $projectIdea = 'The idea is to demonstrate how low-cost ESP32 devices, a cloud
-        realtime database, and a web dashboard can cooperate to automate essential
-        city infrastructure. Each subsystem is autonomous on the edge yet fully
-        observable and controllable from a central Laravel + Filament panel, giving
-        a blueprint for scalable municipal IoT deployments.';
+    $abstract = 'This graduation project presents a holistic and scalable smart-city
+        framework that tackles rapid urbanization by combining Artificial Intelligence,
+        the Internet of Things, and modern communication protocols. It integrates six
+        intelligent modules — Smart Traffic, Precision Smart Farming, Adaptive Smart
+        Lighting, Automated Smart Parking, Intelligent Water Management, and an
+        AI-enhanced Emergency Response System. A distributed network of sensors and
+        actuators feeds a hierarchical computing model: edge devices handle
+        time-sensitive decisions, while refined data is sent to a Firebase cloud
+        backbone that runs AI and machine-learning analytics. An interactive web portal
+        gives users and administrators real-time dashboards, alerts, and remote control
+        over every subsystem — providing a tangible blueprint for intelligent,
+        responsive, and sustainable cities that improve quality of life for all
+        residents.';
 
     $team = [
         ['name' => 'Mahmoud Eltoukhy',  'role' => 'Team Leader', 'image' => asset('Team-Images/mahmoud.jpeg')],
@@ -481,14 +482,6 @@
             <div class="section-kicker">Abstract</div>
             <h2 class="section-title">What this project is</h2>
             <p class="body">{{ $abstract }}</p>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="panel">
-            <div class="section-kicker">Project Idea</div>
-            <h2 class="section-title">The concept</h2>
-            <p class="body">{{ $projectIdea }}</p>
         </div>
     </section>
 
